@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Add source to this project's executable.
-add_executable (PXRacer "PXRacer.cpp" "PXRacer.h")
+add_executable (PXRacer "PXRacer.cpp" "PXRacer.h" "New Folder Test/Test.cpp")
 
 # Cross-platform SFML detection
 if(WIN32 AND NOT DEFINED ENV{SFML_DIR})
