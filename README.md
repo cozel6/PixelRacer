@@ -187,7 +187,6 @@ PixelRacer/
 │           └── tracks/       # Track definition files
 │
 ├── run.sh                    # macOS build script
-├── run.bat                   # Windows build script
 └── README.md
 ```
 
