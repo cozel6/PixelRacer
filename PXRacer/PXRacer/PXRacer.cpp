@@ -3,6 +3,7 @@
 
 using namespace sf;
 using namespace std::literals;
+//Acesta este un test de commit
 
 int main()
 {
