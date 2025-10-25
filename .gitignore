@@ -1,0 +1,42 @@
+# Build directories - platform specific
+PXRacer/build-macos/
+PXRacer/build-windows/
+PXRacer/build/
+PXRacer/out/
+out/
+
+# VSCode settings (optional - remove if you want to share settings)
+.vscode/
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Compiled binaries
+*.exe
+*.app
+*.out
+*.o
+*.obj
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# IDE
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.sln
+
+
+BLUEPRINT.md
