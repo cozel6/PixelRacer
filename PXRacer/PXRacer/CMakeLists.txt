@@ -6,8 +6,12 @@ cmake_minimum_required(VERSION 3.16)
 project(PXRacer)
 
 # Add source to this project's executable.
-add_executable(PXRacer "PXRacer.cpp" "PXRacer.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
+add_executable(PXRacer ${SOURCES})
 
+target_include_directories(PXRacer PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 # === Find and link SFML library ===
 if(WIN32 AND NOT DEFINED ENV{SFML_DIR})
     set(POSSIBLE_SFML_PATHS
