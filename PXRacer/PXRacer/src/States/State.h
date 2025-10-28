@@ -11,7 +11,7 @@ public:
 
 		//Core state functions
 		virtual void handleInput(const sf::Event& event) = 0;
-		virtual void update(Float deltaTime) = 0;
+		virtual void update(float deltaTime) = 0;
 		virtual void render(sf::RenderWindow& window) = 0;
 
 		//Lifecycle hooks

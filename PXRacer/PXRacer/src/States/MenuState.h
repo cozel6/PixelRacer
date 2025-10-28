@@ -1,6 +1,7 @@
 #pragma once
 #include "States/State.h"
 #include <SFML/Graphics.hpp>
+#include <memory>
 
 class MenuState : public State {
 	public:
@@ -13,12 +14,12 @@ class MenuState : public State {
 
 		void onEnter() override;
 
-		private:
-			sf::Text m_titleText;
-			sf::Text m_startText;
-			sf::Text m_versionText;
-			sf::Font m_font;
+	private:
+		std::unique_ptr<sf::Text> m_titleText;
+		std::unique_ptr<sf::Text> m_startText;
+		std::unique_ptr<sf::Text> m_versionText;
+		sf::Font m_font;
 
-			float m_blinkTimer;
-			bool m_showStartText;
+		float m_blinkTimer;
+		bool m_showStartText;
 };

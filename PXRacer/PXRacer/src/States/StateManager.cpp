@@ -22,23 +22,23 @@ void StateManager::pushState(std::unique_ptr<State> state) {
 	state->onEnter();
 	m_states.push(std::move(state));
 
-	std::cout<<" State pushed (stack size: "<< m_states.size() << ")" <<std::endl;
+	std::cout << " State pushed (stack size: " << m_states.size() << ")" << std::endl;
 }
 
 void StateManager::popState() {
 	if (!m_states.empty()) {
 		//Exit current state
 		m_states.top()->onExit();
-		m_states,pop();
+		m_states.pop();
 
 		//Resume previous state if exists
 		if (!m_states.empty()) {
 			m_states.top()->onResume();
 		}
 
-		std::cout<<"State popped (stack size: "<<m_states.size()<<")"<<std::endl;
+		std::cout << "State popped (stack size: " << m_states.size() << ")" << std::endl;
 	}
-	}
+}
 
 void StateManager::changeState(std::unique_ptr<State> state) {
 	//Remove current state
@@ -50,17 +50,17 @@ void StateManager::changeState(std::unique_ptr<State> state) {
 	state->onEnter();
 	m_states.push(std::move(state));
 
-	std::cout<<"State changed (stack size: "<< m_states.size()<<")"<< srd::endl;
+	std::cout << "State changed (stack size: " << m_states.size() << ")" << std::endl;
 
-	}
+}
 
 void StateManager::clearStates() {
 	while (!m_states.empty()) {
 		m_states.top()->onExit();
 		m_states.pop();
 	}
-	std::cout<<"All states cleared"<<std::endl;
-	}
+	std::cout << "All states cleared" << std::endl;
+}
 
 void StateManager::handleInput(const sf::Event& event) {
 	if (!m_states.empty()) {
@@ -79,7 +79,7 @@ void StateManager::render(sf::RenderWindow& window) {
 
 	if (!m_states.empty()) {
 		m_states.top()->render(window);
-   }
+ }
 }
 
 State* StateManager::getCurrentState() const {
