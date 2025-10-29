@@ -14,7 +14,8 @@ MenuState::MenuState(Game* game)
 	m_versionText = std::make_unique<sf::Text>(m_font, sf::String());
 
 	// Load font (SFML3 uses openFromFile)
-	if (!m_font.openFromFile("C:\\Windows\\Fonts\\arial.ttf")) {
+	// Path is relative to working directory (set by CMake or run.sh)
+	if (!m_font.openFromFile("assets/fonts/LiberationMono-Regular.ttf")) {
 		std::cerr << "Failed to load font, using default" << std::endl;
 	}
 
