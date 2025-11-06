@@ -7,7 +7,7 @@ project(PXRacer)
 
 # Add source to this project's executable.
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
-add_executable(PXRacer ${SOURCES})
+add_executable(PXRacer ${SOURCES}   "src/States/MainMenuState.cpp" "src/States/MainMenuState.h")
 
 target_include_directories(PXRacer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

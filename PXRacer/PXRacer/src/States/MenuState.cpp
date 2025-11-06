@@ -1,6 +1,8 @@
-#include "States/MenuState.h"
+﻿#include "MenuState.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
+#include "States/StateManager.h"
+#include "States/MainMenuState.h"
 #include <iostream>
 
 /**
@@ -53,7 +55,6 @@ MenuState::MenuState(Game *game)
 	m_versionText->setPosition(sf::Vector2f(10.0f, Config::WINDOW_HEIGHT - 30.0f));
 
 	// Title Animation
-
 	m_titleAnimation = std::make_unique<TitleAnimation>(
 		m_font,
 		sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT / 3.0f),
@@ -63,7 +64,7 @@ MenuState::MenuState(Game *game)
 
 /**
  * handleInput() - Handles user input
- * Enter = starts the game, Escape = closes the application
+ * Enter = transitions to Main Menu, Escape = closes the application
  */
 void MenuState::handleInput(const sf::Event &event)
 {
@@ -71,12 +72,12 @@ void MenuState::handleInput(const sf::Event &event)
 	if (event.is<sf::Event::KeyPressed>())
 	{
 		const auto *key = event.getIf<sf::Event::KeyPressed>();
-		
-		// ENTER = start the game
+
+		// ENTER = Move to Main Menu state
 		if (key->code == sf::Keyboard::Key::Enter)
 		{
-			std::cout << "Starting game..." << std::endl;
-			m_game->quit(); //
+			std::cout << "Moving to Main Menu..." << std::endl;
+			m_game->getStateManager()->changeState(std::make_unique<MainMenuState>(m_game));
 		}
 		// ESCAPE = shut down application
 		else if (key->code == sf::Keyboard::Key::Escape)
@@ -87,7 +88,9 @@ void MenuState::handleInput(const sf::Event &event)
 	}
 }
 
-//Update() - Updates the menu state every frame
+/**
+ * update() - Updates the menu state every frame
+ */
 void MenuState::update(float deltaTime)
 {
 	// Update animation (if not finished, will move car and letters)
@@ -122,10 +125,14 @@ void MenuState::render(sf::RenderWindow &window)
 	{
 		window.draw(*m_startText);
 	}
+
+	// === Draw version text ===
+	window.draw(*m_versionText);
 }
 
-//onEnter() - Called when entering this state
- 
+/**
+ * onEnter() - Called when entering this state
+ */
 void MenuState::onEnter()
 {
 	std::cout << "Entered Menu State" << std::endl;
