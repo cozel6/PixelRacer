@@ -16,7 +16,8 @@ cmake .. && cmake --build . --config Release
 # Run dacă build-ul a reușit
 if [ $? -eq 0 ]; then
     echo "Starting PXRacer..."
-    ./PXRacer/PXRacer
+    # Run from PXRacer/PXRacer/ directory (where assets/ is located)
+    cd ../PXRacer && ../build-macos/PXRacer/PXRacer
 else
     echo "Build failed!"
     exit 1
