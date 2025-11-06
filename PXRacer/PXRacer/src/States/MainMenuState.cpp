@@ -1,0 +1,140 @@
+﻿#include "MainMenuState.h"
+#include "Core/Game.h"
+#include "Core/Constants.h"
+#include "States/StateManager.h"
+#include <iostream>
+
+MainMenuState::MainMenuState(Game* game)
+    : State(game)
+    , m_selectedIndex(0)
+    , m_blinkTimer(0.0f)
+    , m_showSelector(true)
+{
+    // Load font
+    if (!m_font.openFromFile("assets/fonts/LiberationMono-Regular.ttf")) {
+        std::cerr << "Failed to load font in MainMenuState" << std::endl;
+    }
+
+    // Initialize title text with font
+    m_titleText = std::make_unique<sf::Text>(m_font);
+    m_titleText->setString("MAIN MENU");
+    m_titleText->setCharacterSize(60);
+    m_titleText->setFillColor(Config::ACCENT_COLOR);
+    m_titleText->setStyle(sf::Text::Bold);
+    m_titleText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f - 150.0f, Config::WINDOW_HEIGHT / 4.0f));
+
+    // Menu items
+    std::vector<std::string> menuOptions = {
+        "PLAY",
+        "SETTINGS",
+        "CREDITS",
+        "EXIT"
+    };
+
+    for (size_t i = 0; i < menuOptions.size(); ++i) {
+        // Initialize each menu item with font
+        auto menuItem = std::make_unique<sf::Text>(m_font);
+        menuItem->setString(menuOptions[i]);
+        menuItem->setCharacterSize(32);
+        menuItem->setFillColor(Config::TEXT_COLOR);
+        menuItem->setPosition(sf::Vector2f(
+            Config::WINDOW_WIDTH * 0.5f - 80.0f,
+            Config::WINDOW_HEIGHT * 0.5f + i * 50.0f
+        ));
+        m_menuItems.push_back(std::move(menuItem));
+    }
+
+    updateMenuDisplay();
+}
+
+void MainMenuState::handleInput(const sf::Event& event) {
+    if (event.is<sf::Event::KeyPressed>()) {
+        const auto* key = event.getIf<sf::Event::KeyPressed>();
+
+        switch (key->code) {
+        case sf::Keyboard::Key::Up:
+            m_selectedIndex = (m_selectedIndex - 1 + m_menuItems.size()) % m_menuItems.size();
+            updateMenuDisplay();
+            break;
+
+        case sf::Keyboard::Key::Down:
+            m_selectedIndex = (m_selectedIndex + 1) % m_menuItems.size();
+            updateMenuDisplay();
+            break;
+
+        case sf::Keyboard::Key::Enter:
+            switch (m_selectedIndex) {
+            case 0: // PLAY
+                std::cout << "Starting game..." << std::endl;
+                // TODO: Change to PlayState when ready
+                break;
+            case 1: // SETTINGS
+                std::cout << "Opening settings..." << std::endl;
+                // TODO: Change to SettingsState
+                break;
+            case 2: // CREDITS
+                std::cout << "Showing credits..." << std::endl;
+                // TODO: Change to CreditsState
+                break;
+            case 3: // EXIT
+                m_game->quit();
+                break;
+            }
+            break;
+
+        case sf::Keyboard::Key::Escape:
+            // Go back to initial menu
+            m_game->getStateManager()->popState();
+            break;
+        }
+    }
+}
+
+void MainMenuState::update(float deltaTime) {
+    // Blink effect for selector
+    m_blinkTimer += deltaTime;
+    if (m_blinkTimer > 0.3f) {
+        m_showSelector = !m_showSelector;
+        m_blinkTimer = 0.0f;
+        updateMenuDisplay();
+    }
+}
+
+void MainMenuState::render(sf::RenderWindow& window) {
+    // Nu mai este nevoie să setăm fontul aici
+
+    // Draw title
+    window.draw(*m_titleText);
+
+    // Draw menu items
+    for (auto& item : m_menuItems) {
+        window.draw(*item);
+    }
+}
+
+void MainMenuState::onEnter() {
+    std::cout << "Entered Main Menu State" << std::endl;
+    m_selectedIndex = 0;
+    updateMenuDisplay();
+}
+
+void MainMenuState::updateMenuDisplay() {
+    for (size_t i = 0; i < m_menuItems.size(); ++i) {
+        if (i == m_selectedIndex && m_showSelector) {
+            m_menuItems[i]->setFillColor(Config::ACCENT_COLOR);
+            // Adaugă selectorul ">"
+            std::string currentText = m_menuItems[i]->getString();
+            if (currentText.substr(0, 2) != "> ") {
+                m_menuItems[i]->setString("> " + currentText);
+            }
+        }
+        else {
+            m_menuItems[i]->setFillColor(Config::TEXT_COLOR);
+            // Elimină selectorul ">" dacă există
+            std::string currentText = m_menuItems[i]->getString();
+            if (currentText.substr(0, 2) == "> ") {
+                m_menuItems[i]->setString(currentText.substr(2));
+            }
+        }
+    }
+}
