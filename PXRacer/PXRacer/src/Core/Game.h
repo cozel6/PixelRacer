@@ -20,6 +20,9 @@ public:
     // Game control
     void quit() { m_isRunning = false; }
 
+    //StateManager
+    StateManager* getStateManager() { return m_stateManager.get(); }
+
 private:
     void processEvents();
     void update(float deltaTime);
