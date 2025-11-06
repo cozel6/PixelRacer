@@ -6,8 +6,20 @@ cmake_minimum_required(VERSION 3.16)
 project(PXRacer)
 
 # Add source to this project's executable.
-add_executable(PXRacer "PXRacer.cpp" "PXRacer.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
+add_executable(PXRacer ${SOURCES}   "src/States/MainMenuState.cpp" "src/States/MainMenuState.h")
 
+target_include_directories(PXRacer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# === Set working directory for IDEs ===
+# When running from Visual Studio (F5) or Xcode (Run),
+# the working directory will be the project root (where assets/ is located)
+set_target_properties(PXRacer PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"  # Visual Studio (Windows)
+    XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" # Xcode (macOS)
+)
 # === Find and link SFML library ===
 if(WIN32 AND NOT DEFINED ENV{SFML_DIR})
     set(POSSIBLE_SFML_PATHS
@@ -52,4 +64,42 @@ if(APPLE)
         INSTALL_RPATH "@executable_path/../Frameworks"
         BUILD_WITH_INSTALL_RPATH TRUE
     )
+endif()
+
+# === Asset management: Symlink (macOS Dev) vs Copy (Windows/Release) ===
+# Strategy:
+#   - macOS Debug: Symlink → instant, 0 copy time
+#   - Windows Debug: Copy → only modified files (fast)
+#   - Release (both): Copy → for distribution
+
+if(UNIX AND CMAKE_BUILD_TYPE MATCHES "Debug")
+    # macOS/Linux in Debug mode: Create symlink (instant, no copying!)
+    add_custom_command(TARGET PXRacer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:PXRacer>/assets
+        COMMENT "Creating symlink to assets (Dev mode - instant!)"
+    )
+    message(STATUS "Development mode (macOS): Symlinking assets → instant, no copy! ⚡")
+
+elseif(WIN32 AND CMAKE_BUILD_TYPE MATCHES "Debug")
+    # Windows in Debug mode: Copy (symlink requires admin rights)
+    # Note: copy_directory only copies modified files (incremental)
+    add_custom_command(TARGET PXRacer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:PXRacer>/assets
+        COMMENT "Copying assets (Dev mode - only modified files)"
+    )
+    message(STATUS "Development mode (Windows): Copying assets (incremental) 🔄")
+
+else()
+    # Release mode (both platforms): Copy for distribution
+    add_custom_command(TARGET PXRacer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:PXRacer>/assets
+        COMMENT "Copying assets (Release mode - for distribution)"
+    )
+    message(STATUS "Release mode: Copying assets for distribution 📦")
 endif()
