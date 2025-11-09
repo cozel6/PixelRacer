@@ -18,6 +18,8 @@ class SettingsState : public State {
 
         // Lifecycle hooks
         void onEnter() override;
+        void updateMenuDisplay();
+
 
     private:
         // Fonts for text
