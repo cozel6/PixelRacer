@@ -11,6 +11,8 @@ public:
 		explicit StateManager(Game* game);
 		~StateManager();
 
+		
+
 		//State management
 		void pushState(std::unique_ptr<State> state);
 		void popState();
@@ -25,6 +27,7 @@ public:
 		//Queries
 		bool isEmpty() const { return m_states.empty();  }
 		State* getCurrentState() const;
+
 
 private: 
 		Game* m_game;

@@ -2,6 +2,7 @@
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/StateManager.h"
+#include "States/SettingsState.h"
 #include <iostream>
 
 MainMenuState::MainMenuState(Game* game)
@@ -70,7 +71,8 @@ void MainMenuState::handleInput(const sf::Event& event) {
                 break;
             case 1: // SETTINGS
                 std::cout << "Opening settings..." << std::endl;
-                // TODO: Change to SettingsState
+                m_game->getStateManager()->pushState(std::make_unique<SettingsState>(m_game));
+
                 break;
             case 2: // CREDITS
                 std::cout << "Showing credits..." << std::endl;
@@ -101,7 +103,7 @@ void MainMenuState::update(float deltaTime) {
 }
 
 void MainMenuState::render(sf::RenderWindow& window) {
-    // Nu mai este nevoie să setăm fontul aici
+    // No longer need to set font here
 
     // Draw title
     window.draw(*m_titleText);
@@ -122,7 +124,7 @@ void MainMenuState::updateMenuDisplay() {
     for (size_t i = 0; i < m_menuItems.size(); ++i) {
         if (i == m_selectedIndex && m_showSelector) {
             m_menuItems[i]->setFillColor(Config::ACCENT_COLOR);
-            // Adaugă selectorul ">"
+            // Add selection ">"
             std::string currentText = m_menuItems[i]->getString();
             if (currentText.substr(0, 2) != "> ") {
                 m_menuItems[i]->setString("> " + currentText);
@@ -130,7 +132,7 @@ void MainMenuState::updateMenuDisplay() {
         }
         else {
             m_menuItems[i]->setFillColor(Config::TEXT_COLOR);
-            // Elimină selectorul ">" dacă există
+            // Remove selection ">"
             std::string currentText = m_menuItems[i]->getString();
             if (currentText.substr(0, 2) == "> ") {
                 m_menuItems[i]->setString(currentText.substr(2));
