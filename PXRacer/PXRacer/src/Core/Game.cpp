@@ -66,12 +66,15 @@ void Game::processEvents() {
  }
 
  // Pass event to current state
+ if(m_stateManager){
  m_stateManager->handleInput(event);
+ }
  }
 }
 
 void Game::update(float deltaTime) {
  // Update state manager
+
  m_stateManager->update(deltaTime);
 
  // Check if we should quit

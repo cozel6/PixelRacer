@@ -19,9 +19,28 @@ MenuState::MenuState(Game *game)
 	m_startText = std::make_unique<sf::Text>(m_font, sf::String());
 	m_versionText = std::make_unique<sf::Text>(m_font, sf::String());
 
+	//Load background
+	 m_backgroundTexture = std::make_unique<sf::Texture>();
+
+    if (m_backgroundTexture->loadFromFile("assets/textures/mainmenubg.png")) {
+        m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
+
+        auto textureSize = m_backgroundTexture->getSize();
+        float scaleX = static_cast<float>(Config::WINDOW_WIDTH) / textureSize.x;
+        float scaleY = static_cast<float>(Config::WINDOW_HEIGHT) / textureSize.y;
+        m_backgroundSprite->setScale(sf::Vector2f(scaleX, scaleY));
+    }
+    else {
+    std::cerr<< "Failed to load background texture!" <<std::endl;
+    m_backgroundTexture.reset();
+    }
+    // Load font
+    if (!m_font.openFromFile("assets/fonts/PressStart2P-Regular.ttf")) {
+        std::cerr << "Failed to load font in MainMenuState" << std::endl;
+    }
 	// === Load font ===
 	// Path is relative to working directory (set by CMake or run.sh)
-	if (!m_font.openFromFile("assets/fonts/LiberationMono-Regular.ttf"))
+	if (!m_font.openFromFile("assets/fonts/PressStart2P-Regular.ttf"))
 	{
 		std::cerr << "Failed to load font, using default" << std::endl;
 	}
@@ -30,7 +49,7 @@ MenuState::MenuState(Game *game)
 	// Not drawn directly, but used by TitleAnimation for positioning
 	m_titleText->setString(sf::String("PIXELRACER"));
 	m_titleText->setCharacterSize(80);
-	m_titleText->setFillColor(Config::ACCENT_COLOR);
+	m_titleText->setFillColor(sf::Color(30, 30, 30));
 	m_titleText->setStyle(sf::Text::Bold);
 
 	// Center the title using Rect API (position + size)
@@ -102,7 +121,7 @@ void MenuState::update(float deltaTime)
 		m_blinkTimer += deltaTime;
 
 		// Toggle visibility every 0.5 seconds
-		if (m_blinkTimer >= 0.5f)
+		if (m_blinkTimer >= 0.5f)  
 		{
 			m_showStartText = !m_showStartText;
 			m_blinkTimer = 0.0f;
@@ -116,6 +135,11 @@ void MenuState::update(float deltaTime)
  */
 void MenuState::render(sf::RenderWindow &window)
 {
+
+
+	if (m_backgroundSprite) {
+		window.draw(*m_backgroundSprite);
+	}
 	// === Draw animation (car, ropes, letters) ===
 	m_titleAnimation->render(window);
 
