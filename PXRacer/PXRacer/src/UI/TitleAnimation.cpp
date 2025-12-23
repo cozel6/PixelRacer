@@ -33,7 +33,7 @@ TitleAnimation::TitleAnimation(const sf::Font& font, const sf::Vector2f& targetC
         // Create text object for current letter
         sf::Text letterText(font, sf::String(std::string(1, word[i])));
         letterText.setCharacterSize(80);                // Font size: 80px
-        letterText.setFillColor(Config::ACCENT_COLOR);  // Orange color
+        letterText.setFillColor(sf::Color(30,30,30));  // Black color
         letterText.setStyle(sf::Text::Bold);            // Bold font
         
         // Set origin to center of letter (for correct rotation/positioning)
