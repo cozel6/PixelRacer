@@ -3,6 +3,7 @@
 #include "Core/Constants.h"
 #include <cmath>
 #include <iostream>
+#include <random>
 
 // ============================================================================
 // RoadSegment Implementation
@@ -21,6 +22,8 @@ RoadSegment::RoadSegment()
     , screenW(0.0f)
     , scale(0.0f)
 {
+    pothole.exists = false;
+    pothole.wasHit = false;
 }
 
 // ============================================================================
@@ -29,6 +32,7 @@ RoadSegment::RoadSegment()
 
 Road::Road()
     : m_playerZ(0.0f)
+    , m_rng(std::random_device{}())
 {
 }
 
@@ -36,8 +40,6 @@ void Road::generate(int segmentCount) {
     m_segments.clear();
     m_segments.reserve(segmentCount);
 
-    // ✅ FIX: Ensure seamless color loop by making total segments divisible by pattern length
-    // Pattern repeats every 3 segments for rumble, every 6 for road/grass
     const int COLOR_PATTERN_LENGTH = 6;
     int adjustedCount = ((segmentCount + COLOR_PATTERN_LENGTH - 1) / COLOR_PATTERN_LENGTH) * COLOR_PATTERN_LENGTH;
 
@@ -64,16 +66,15 @@ void Road::generate(int segmentCount) {
     addHill(pos, adjustedCount / 6, 600.0f); pos += adjustedCount / 6;
     addStraight(pos, adjustedCount / 6);
 
-    std::cout << "Road generated (procedural): " << m_segments.size() 
-              << " segments (adjusted from " << segmentCount << " for seamless loop)" << std::endl;
+    generatePotholes();
+
+    std::cout << "Road generated (procedural): " << m_segments.size() << " segments" << std::endl;
 }
 
 void Road::init(int segmentCount) {
     m_segments.clear();
     m_segments.reserve(segmentCount);
 
-    // ✅ FIX: Ensure seamless color loop by making total segments divisible by pattern length
-    // Pattern repeats every 3 segments for rumble, every 6 for road/grass
     const int COLOR_PATTERN_LENGTH = 6;
     int adjustedCount = ((segmentCount + COLOR_PATTERN_LENGTH - 1) / COLOR_PATTERN_LENGTH) * COLOR_PATTERN_LENGTH;
 
@@ -92,34 +93,77 @@ void Road::init(int segmentCount) {
         m_segments.push_back(segment);
     }
 
-    std::cout << "Road initialized (flat): " << m_segments.size() 
-              << " segments (adjusted from " << segmentCount << " for seamless loop)" << std::endl;
+    generatePotholes();
+
+    std::cout << "Road initialized (flat): " << m_segments.size() << " segments" << std::endl;
+}
+
+// ✅ Generează gropi aleatoriu pe segmente
+void Road::generatePotholes() {
+    std::uniform_real_distribution<float> chanceDist(0.0f, 1.0f);
+    std::uniform_real_distribution<float> positionDist(-500.0f, 500.0f);
+    std::uniform_real_distribution<float> widthDist(100.0f, 250.0f);
+    
+    int potholeCount = 0;
+    
+    // Skip primele 30 de segmente (zona de start)
+    for (size_t i = 30; i < m_segments.size(); ++i) {
+        if (chanceDist(m_rng) < RoadConfig::POTHOLE_SPAWN_CHANCE) {
+            m_segments[i].pothole.exists = true;
+            m_segments[i].pothole.offsetX = positionDist(m_rng);
+            m_segments[i].pothole.width = widthDist(m_rng);
+            m_segments[i].pothole.wasHit = false;
+            potholeCount++;
+        }
+    }
+    
+    std::cout << "[ROAD] Generated " << potholeCount << " potholes (25% chance)" << std::endl;
+}
+
+// ✅ Verifică coliziunea cu groapa
+bool Road::checkPotholeCollision(float wheelX, float wheelZ, float& damageOut) {
+    RoadSegment* segment = getSegmentAt(wheelZ);
+    if (!segment || !segment->pothole.exists || segment->pothole.wasHit) {
+        return false;
+    }
+    
+    // Verifică dacă roata e în groapa (pe X)
+    float potholeLeft = segment->pothole.offsetX - segment->pothole.width / 2.0f;
+    float potholeRight = segment->pothole.offsetX + segment->pothole.width / 2.0f;
+    
+    if (wheelX >= potholeLeft && wheelX <= potholeRight) {
+        segment->pothole.wasHit = true;
+        damageOut = RoadConfig::POTHOLE_DAMAGE;
+        return true;
+    }
+    
+    return false;
+}
+
+void Road::resetPotholes() {
+    for (auto& seg : m_segments) {
+        seg.pothole.wasHit = false;
+    }
 }
 
 void Road::addStraight(int startIndex, int count) {
-    for (int i = 0; i < count && startIndex + i < m_segments.size(); ++i) {
+    for (int i = 0; i < count && startIndex + i < static_cast<int>(m_segments.size()); ++i) {
         m_segments[startIndex + i].curve = 0.0f;
         m_segments[startIndex + i].worldY = 0.0f;
     }
 }
 
 void Road::addCurve(int startIndex, int count, float curvature) {
-    for (int i = 0; i < count && startIndex + i < m_segments.size(); ++i) {
+    for (int i = 0; i < count && startIndex + i < static_cast<int>(m_segments.size()); ++i) {
         m_segments[startIndex + i].curve = curvature;
     }
 }
 
 void Road::addHill(int startIndex, int count, float height) {
-    std::cout << "   ⛰️  ADDING HILL: startIndex=" << startIndex << ", count=" << count << ", height=" << height << std::endl;
-    
-    for (int i = 0; i < count && startIndex + i < m_segments.size(); ++i) {
+    for (int i = 0; i < count && startIndex + i < static_cast<int>(m_segments.size()); ++i) {
         float t = static_cast<float>(i) / count;
         float calculatedY = std::sin(t * 3.14159f) * height;
         m_segments[startIndex + i].worldY = calculatedY;
-        
-        if (i < 5) {
-            std::cout << "      seg[" << (startIndex + i) << "].worldY = " << calculatedY << std::endl;
-        }
     }
 }
 
@@ -131,13 +175,9 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
     const float windowWidth = static_cast<float>(window.getSize().x);
     const float windowHeight = static_cast<float>(window.getSize().y);
     
-    const float cameraY = RoadConfig::CAMERA_HEIGHT;
-    
-    // ✅ FIX: Handle wrap-around properly for seamless loop
     const int trackSegmentCount = static_cast<int>(m_segments.size());
     const float trackLength = getLength();
     
-    // Normalize camera Z to track bounds
     float normalizedCameraZ = std::fmod(cameraZ, trackLength);
     if (normalizedCameraZ < 0.0f) normalizedCameraZ += trackLength;
     
@@ -153,7 +193,6 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
     ground.setFillColor(sf::Color(16, 200, 16));
     window.draw(ground);
 
-    // ✅ CurveProcessor pentru curbe smooth
     std::vector<float> segmentCurves(m_segments.size());
     for (size_t i = 0; i < m_segments.size(); ++i) {
         segmentCurves[i] = m_segments[i].curve;
@@ -168,12 +207,6 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
         cameraSegmentPos
     );
 
-    // Orizont static
-    sf::RectangleShape horizon(sf::Vector2f(windowWidth, 2.0f));
-    horizon.setPosition(sf::Vector2f(0.0f, windowHeight * 0.5f));
-    horizon.setFillColor(sf::Color(100, 150, 200, 128));
-    window.draw(horizon);
-
     const float CURVE_AMPLIFICATION = 2.5f;
     
     for (int y = static_cast<int>(windowHeight); y >= static_cast<int>(windowHeight * 0.5f); --y) {
@@ -184,7 +217,6 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
         float relativeZ = z - (baseIndex * RoadConfig::SEGMENT_LENGTH);
         float segmentOffsetFloat = relativeZ / RoadConfig::SEGMENT_LENGTH;
 
-        // Interpolate curve cu Catmull-Rom
         float highResIndex = segmentOffsetFloat * 4.0f;
         int idx0 = std::max(0, std::min(static_cast<int>(highResIndex), curveData.baseSamples - 1));
         int idx_1 = std::max(0, idx0 - 1);
@@ -203,10 +235,7 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
 
         float relativeCurve = accumulatedCurve - curveData.cameraOffset;
 
-        // ✅ FIX: Get segment with proper wrap-around - NO CLAMPING!
         int segmentOffset = static_cast<int>(segmentOffsetFloat);
-        
-        // ✅ Direct modulo wrap-around, no clamping
         int segmentIndex = (baseIndex + segmentOffset) % trackSegmentCount;
         if (segmentIndex < 0) segmentIndex += trackSegmentCount;
 
@@ -240,19 +269,36 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
             rightRumble.setPosition(sf::Vector2f(roadCenterX + roadWidth - rumbleWidth, static_cast<float>(y)));
             rightRumble.setFillColor(seg.rumbleColor);
             window.draw(rightRumble);
+            
+            // ═══════════════════════════════════════════════════════════════
+            // ✅ POTHOLE - PATĂ ÎNCHISĂ PE ASFALT (PARTE DIN TILE)
+            // ═══════════════════════════════════════════════════════════════
+            if (seg.pothole.exists) {
+                // Calculăm poziția și lățimea gropii pe ecran
+                float potholeScreenX = roadCenterX + (seg.pothole.offsetX / static_cast<float>(RoadConfig::ROAD_WIDTH)) * roadWidth * 2.0f;
+                float potholeScreenWidth = (seg.pothole.width / static_cast<float>(RoadConfig::ROAD_WIDTH)) * roadWidth * 2.0f;
+                
+                // Minim vizibil
+                potholeScreenWidth = std::max(potholeScreenWidth, 8.0f);
+                
+                // Culoarea gropii - mult mai închisă decât asfaltul!
+                sf::Color potholeColor = seg.pothole.wasHit ? 
+                    sf::Color(60, 55, 50) :     // Mai deschis dacă a fost lovită
+                    sf::Color(30, 25, 20);      // Foarte închis - groapă activă
+                
+                // Desenăm groapa peste asfalt
+                sf::RectangleShape potholeLine(sf::Vector2f(potholeScreenWidth, 1.0f));
+                potholeLine.setPosition(sf::Vector2f(potholeScreenX - potholeScreenWidth / 2.0f, static_cast<float>(y)));
+                potholeLine.setFillColor(potholeColor);
+                window.draw(potholeLine);
+            }
         }
     }
 }
 
 void Road::setSegmentCurve(int index, float curve) {
-    if (index >= 0 && index < m_segments.size()) {
+    if (index >= 0 && index < static_cast<int>(m_segments.size())) {
         m_segments[index].curve = curve;
-        
-        static int debugCount = 0;
-        if (std::abs(curve) > 0.1f && debugCount < 10) {
-            std::cout << "      🔍 seg[" << index << "].curve = " << curve << std::endl;
-            debugCount++;
-        }
     }
 }
 
@@ -281,7 +327,6 @@ float Road::getCurveAt(float z) const {
 RoadSegment* Road::getSegmentAt(float z) {
     if (m_segments.empty()) return nullptr;
 
-    // ✅ FIX: Proper wrap-around with normalized Z
     const float trackLength = getLength();
     float normalizedZ = std::fmod(z, trackLength);
     if (normalizedZ < 0.0f) normalizedZ += trackLength;
@@ -295,7 +340,6 @@ RoadSegment* Road::getSegmentAt(float z) {
 const RoadSegment* Road::getSegmentAt(float z) const {
     if (m_segments.empty()) return nullptr;
 
-    // ✅ FIX: Proper wrap-around with normalized Z
     const float trackLength = getLength();
     float normalizedZ = std::fmod(z, trackLength);
     if (normalizedZ < 0.0f) normalizedZ += trackLength;

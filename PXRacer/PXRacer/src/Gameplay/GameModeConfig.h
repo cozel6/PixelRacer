@@ -92,17 +92,30 @@ struct EndlessStats {
 // ✅ NEW: Endless Mode Difficulty Progression
 struct EndlessDifficulty {
     int level = 1;                      // Current difficulty level (1-10)
-    float trafficDensity = 0.1f;        // Traffic density (0.0 - 1.0)
-    float minTrafficSpeed = 0.4f;       // Min traffic speed multiplier
-    float maxTrafficSpeed = 0.6f;       // Max traffic speed multiplier
-    float hazardChance = 0.0f;          // Chance of hazards appearing (0.0 - 1.0)
+    float curveMultiplier = 1.0f;       // Ajustare fine pentru dificultate
+    float checkpointBonus = 1000.0f;          // Bonus de timp per checkpoint
     
     // Reset to default
     void reset() {
         level = 1;
-        trafficDensity = 0.1f;
-        minTrafficSpeed = 0.4f;
-        maxTrafficSpeed = 0.6f;
-        hazardChance = 0.0f;
+        curveMultiplier = 1.0f;
+        checkpointBonus = 1000.0f;
     }
+};
+
+// ✅ NEW: Time Trial Settings
+struct TimeTrialSettings {
+    float initialTime = 60.0f;      // Starting time in seconds
+    float checkpointBonus = 15.0f;  // Time added per checkpoint
+    float currentTime = 60.0f;      // Current remaining time
+    bool isGameOver = false;
+};
+
+// ✅ NEW: Campaign Settings
+struct CampaignSettings {
+    int currentTrack = 0;
+    int totalTracks = 5;
+    int currentPosition = 8;  // Out of 8 racers
+    int lapsRequired = 3;
+    int currentLap = 0;
 };
