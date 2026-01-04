@@ -31,9 +31,7 @@ namespace PlayerConfig {
     constexpr float PARTIAL_GRIP_1 = 0.25f;
     constexpr float NO_GRIP = 0.1f;
     
-    // ═══════════════════════════════════════════════════════════════
-    // ✅ ARCADE CHALLENGE PHYSICS
-    // ═══════════════════════════════════════════════════════════════
+    // Arcade challenge physics
     constexpr float CENTRIFUGAL_FORCE = 40.0f;
     constexpr float CORNER_SPEED_PENALTY = 0.9f;
     constexpr float SPEED_WOBBLE_THRESHOLD = 0.95f;
@@ -42,12 +40,10 @@ namespace PlayerConfig {
     constexpr float DRIFT_THRESHOLD = 0.4f;
     constexpr float SAFE_CORNER_SPEED = 0.7f;
     
-    // ═══════════════════════════════════════════════════════════════
-    // ✅ DAMAGE SYSTEM
-    // ═══════════════════════════════════════════════════════════════
-    constexpr float MAX_DAMAGE = 100.0f;              // Game over la 100
-    constexpr float DAMAGE_SPEED_PENALTY_THRESHOLD = 10.0f;  // La fiecare 10 DMG
-    constexpr float DAMAGE_SPEED_PENALTY = 5.56f;     // ~20 km/h (5.56 m/s)
+    // Damage system
+    constexpr float MAX_DAMAGE = 100.0f;
+    constexpr float DAMAGE_SPEED_PENALTY_THRESHOLD = 10.0f;
+    constexpr float DAMAGE_SPEED_PENALTY = 5.56f;
 }
 
 enum class SurfaceType {
@@ -114,6 +110,7 @@ public:
     
     // ✅ Damage system
     void addDamage(float damage);
+    void repair(float amount);  // ✅ NEW
     float getMaxSpeedWithDamage() const;
     
     void resetPosition();
@@ -136,9 +133,9 @@ private:
     float m_wobbleTimer;
     bool m_isBraking;
     
-    // ✅ Damage state
+    // Damage state
     float m_totalDamage = 0.0f;
-    int m_lastDamageThreshold = 0;  // Pentru a aplica penalizări la fiecare 10 DMG
+    int m_lastDamageThreshold = 0;
     
     void handleInput(float deltaTime, float gripMultiplier, float roadCurve);
     void applyPhysics(float deltaTime, const WheelSurfaces& wheelSurfaces, float roadCurve);

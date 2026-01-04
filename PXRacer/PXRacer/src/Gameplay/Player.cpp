@@ -47,27 +47,27 @@ void Player::getWheelPositions(float& flX, float& flZ,
 void Player::addDamage(float damage) {
     float oldDamage = m_totalDamage;
     m_totalDamage += damage;
-    
-    // Clamp la max
     m_totalDamage = std::min(m_totalDamage, PlayerConfig::MAX_DAMAGE);
     
-    // Verificăm dacă am trecut un prag de 10 DMG
     int oldThreshold = static_cast<int>(oldDamage / PlayerConfig::DAMAGE_SPEED_PENALTY_THRESHOLD);
     int newThreshold = static_cast<int>(m_totalDamage / PlayerConfig::DAMAGE_SPEED_PENALTY_THRESHOLD);
     
     if (newThreshold > oldThreshold) {
-        // Am trecut un prag! Aplicăm penalizare de viteză
         m_speed = std::max(0.0f, m_speed - PlayerConfig::DAMAGE_SPEED_PENALTY);
-        std::cout << "[DAMAGE] Threshold " << newThreshold << "0 DMG reached! Speed penalty applied. Current speed: " 
-                  << static_cast<int>(m_speed * 3.6f) << " km/h" << std::endl;
+        std::cout << "[DAMAGE] Threshold " << newThreshold << "0 DMG reached! Speed penalty applied." << std::endl;
     }
     
     m_lastDamageThreshold = newThreshold;
     
-    // Game over check
     if (m_totalDamage >= PlayerConfig::MAX_DAMAGE) {
-        std::cout << "[DAMAGE] CAR DESTROYED! Total damage: " << m_totalDamage << std::endl;
+        std::cout << "[DAMAGE] CAR DESTROYED!" << std::endl;
     }
+}
+
+// ✅ NEW: Repair damage
+void Player::repair(float amount) {
+    m_totalDamage = std::max(0.0f, m_totalDamage - amount);
+    m_lastDamageThreshold = static_cast<int>(m_totalDamage / PlayerConfig::DAMAGE_SPEED_PENALTY_THRESHOLD);
 }
 
 float Player::getMaxSpeedWithDamage() const {

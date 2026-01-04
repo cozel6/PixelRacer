@@ -9,7 +9,9 @@ void TrackBuilder::buildTrack(Road& road, const TrackDefinition& trackDef) {
     }
 
     std::cout << "\n🏗️ ===== BUILDING TRACK: " << trackDef.name << " =====" << std::endl;
-    road.init(totalSegments);
+    
+    // Folosește initClean pentru Campaign tracks - fără gropi și pickup-uri
+    road.initClean(totalSegments);
 
     int currentIndex = 0;
     
@@ -45,10 +47,10 @@ void TrackBuilder::buildTrack(Road& road, const TrackDefinition& trackDef) {
         currentIndex += section.length;
     }
 
-    // ✅ NEW: Smooth the loop transition
+    // Smooth the loop transition
     smoothLoopTransition(road, totalSegments);
 
-    std::cout << "✅ Track built: " << road.getSegmentCount() << " segments\n" << std::endl;
+    std::cout << "✅ Track built: " << road.getSegmentCount() << " segments (Campaign mode - no obstacles)\n" << std::endl;
 }
 
 void TrackBuilder::smoothLoopTransition(Road& road, int totalSegments) {

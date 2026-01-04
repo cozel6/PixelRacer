@@ -1,11 +1,13 @@
 ﻿#include "TrackSelectState.h"
 #include "PlayState.h"
+#include "TaskSelectState.h"
 #include "GameModeSelectState.h"
 #include "Core/Constants.h"
 #include "Core/Game.h"
 #include "States/StateManager.h"
 #include <iostream>
 #include <cmath>
+#include <cstdint>
 
 TrackSelectState::TrackSelectState(Game* game, GameMode gameMode)
     : State(game)
@@ -59,10 +61,10 @@ std::string TrackSelectState::getModeString() {
 
 sf::Color TrackSelectState::getDifficultyColor(TrackDifficulty diff) {
     switch (diff) {
-        case TrackDifficulty::Easy:   return sf::Color(76, 175, 80);    // Green
-        case TrackDifficulty::Medium: return sf::Color(255, 193, 7);    // Yellow
-        case TrackDifficulty::Hard:   return sf::Color(255, 87, 34);    // Orange
-        case TrackDifficulty::Expert: return sf::Color(244, 67, 54);    // Red
+        case TrackDifficulty::Easy:   return sf::Color(76, 175, 80);
+        case TrackDifficulty::Medium: return sf::Color(255, 193, 7);
+        case TrackDifficulty::Hard:   return sf::Color(255, 87, 34);
+        case TrackDifficulty::Expert: return sf::Color(244, 67, 54);
         default: return sf::Color::White;
     }
 }
@@ -81,7 +83,6 @@ void TrackSelectState::createUI() {
     const float windowWidth = static_cast<float>(Config::WINDOW_WIDTH);
     const float windowHeight = static_cast<float>(Config::WINDOW_HEIGHT);
 
-    // Header
     m_headerText = std::make_unique<sf::Text>(m_font);
     m_headerText->setString("SELECT TRACK");
     m_headerText->setCharacterSize(32);
@@ -94,7 +95,6 @@ void TrackSelectState::createUI() {
     ));
     m_headerText->setPosition(sf::Vector2f(windowWidth * 0.5f, 40.0f));
     
-    // Mode indicator
     m_modeText = std::make_unique<sf::Text>(m_font);
     m_modeText->setString("Mode: " + getModeString());
     m_modeText->setCharacterSize(14);
@@ -106,7 +106,6 @@ void TrackSelectState::createUI() {
     ));
     m_modeText->setPosition(sf::Vector2f(windowWidth * 0.5f, 75.0f));
     
-    // Hint
     m_hintText = std::make_unique<sf::Text>(m_font);
     m_hintText->setString("UP/DOWN to select - ENTER to race - ESC to go back");
     m_hintText->setCharacterSize(10);
@@ -118,21 +117,18 @@ void TrackSelectState::createUI() {
     ));
     m_hintText->setPosition(sf::Vector2f(windowWidth * 0.5f, windowHeight - 25.0f));
     
-    // Detail panel (right side)
     m_detailPanel = std::make_unique<sf::RectangleShape>(sf::Vector2f(450.0f, 500.0f));
     m_detailPanel->setPosition(sf::Vector2f(windowWidth - 480.0f, 110.0f));
     m_detailPanel->setFillColor(sf::Color(20, 20, 30, 240));
     m_detailPanel->setOutlineColor(sf::Color(60, 60, 80));
     m_detailPanel->setOutlineThickness(2.0f);
     
-    // Track preview placeholder
     m_trackPreview = std::make_unique<sf::RectangleShape>(sf::Vector2f(410.0f, 180.0f));
     m_trackPreview->setPosition(sf::Vector2f(windowWidth - 460.0f, 130.0f));
     m_trackPreview->setFillColor(sf::Color(40, 40, 50));
     m_trackPreview->setOutlineColor(sf::Color(80, 80, 100));
     m_trackPreview->setOutlineThickness(1.0f);
     
-    // Detail texts
     float detailX = windowWidth - 460.0f;
     float detailY = 330.0f;
     
@@ -167,7 +163,6 @@ void TrackSelectState::createUI() {
     m_detailDescription->setLineSpacing(1.4f);
     m_detailDescription->setPosition(sf::Vector2f(detailX, detailY + 140.0f));
     
-    // Back button
     m_backButton = std::make_unique<sf::RectangleShape>(sf::Vector2f(140.0f, 45.0f));
     m_backButton->setPosition(sf::Vector2f(30.0f, windowHeight - 70.0f));
     m_backButton->setFillColor(sf::Color(60, 40, 40));
@@ -185,7 +180,6 @@ void TrackSelectState::createUI() {
     ));
     m_backText->setPosition(sf::Vector2f(100.0f, windowHeight - 47.5f));
     
-    // Start button
     m_startButton = std::make_unique<sf::RectangleShape>(sf::Vector2f(180.0f, 50.0f));
     m_startButton->setPosition(sf::Vector2f(windowWidth - 210.0f, windowHeight - 75.0f));
     m_startButton->setFillColor(sf::Color(40, 120, 40));
@@ -221,19 +215,16 @@ void TrackSelectState::createTrackCards() {
         
         float cardY = startY + i * (cardHeight + cardSpacing);
         
-        // Card background
         card.cardBg = std::make_unique<sf::RectangleShape>(sf::Vector2f(cardWidth, cardHeight));
         card.cardBg->setPosition(sf::Vector2f(startX, cardY));
         card.cardBg->setFillColor(sf::Color(30, 30, 40, 230));
         card.cardBg->setOutlineColor(sf::Color(50, 50, 60));
         card.cardBg->setOutlineThickness(2.0f);
         
-        // Difficulty color bar (left edge)
         card.difficultyBadge = std::make_unique<sf::RectangleShape>(sf::Vector2f(6.0f, cardHeight));
         card.difficultyBadge->setPosition(sf::Vector2f(startX, cardY));
         card.difficultyBadge->setFillColor(card.difficultyColor);
         
-        // Track name
         card.nameText = std::make_unique<sf::Text>(m_font);
         card.nameText->setString(m_availableTracks[i].name);
         card.nameText->setCharacterSize(16);
@@ -241,14 +232,12 @@ void TrackSelectState::createTrackCards() {
         card.nameText->setStyle(sf::Text::Bold);
         card.nameText->setPosition(sf::Vector2f(startX + 20.0f, cardY + 12.0f));
         
-        // Country
         card.countryText = std::make_unique<sf::Text>(m_font);
         card.countryText->setString(m_availableTracks[i].country);
         card.countryText->setCharacterSize(11);
         card.countryText->setFillColor(sf::Color(150, 150, 150));
         card.countryText->setPosition(sf::Vector2f(startX + 20.0f, cardY + 38.0f));
         
-        // Length
         card.lengthText = std::make_unique<sf::Text>(m_font);
         std::string lengthStr = std::to_string(static_cast<int>(m_availableTracks[i].lengthKm * 10) / 10.0f);
         lengthStr = lengthStr.substr(0, lengthStr.find('.') + 2) + " km";
@@ -257,7 +246,6 @@ void TrackSelectState::createTrackCards() {
         card.lengthText->setFillColor(sf::Color(100, 180, 255));
         card.lengthText->setPosition(sf::Vector2f(startX + 200.0f, cardY + 38.0f));
         
-        // Difficulty text
         card.difficultyText = std::make_unique<sf::Text>(m_font);
         card.difficultyText->setString(getDifficultyString(m_availableTracks[i].difficulty));
         card.difficultyText->setCharacterSize(10);
@@ -273,14 +261,12 @@ void TrackSelectState::updateSelection(int newIndex) {
         return;
     }
     
-    // Deselect old
     if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_trackCards.size())) {
         m_trackCards[m_selectedIndex].isSelected = false;
         m_trackCards[m_selectedIndex].cardBg->setOutlineColor(sf::Color(50, 50, 60));
         m_trackCards[m_selectedIndex].cardBg->setFillColor(sf::Color(30, 30, 40, 230));
     }
     
-    // Select new
     m_selectedIndex = newIndex;
     m_trackCards[m_selectedIndex].isSelected = true;
     m_trackCards[m_selectedIndex].cardBg->setOutlineColor(sf::Color(100, 150, 255));
@@ -310,7 +296,6 @@ void TrackSelectState::updateDetailPanel() {
     
     m_detailDescription->setString(track.description);
     
-    // Update preview color based on difficulty
     m_trackPreview->setFillColor(sf::Color(
         static_cast<std::uint8_t>(30 + getDifficultyColor(track.difficulty).r / 10),
         static_cast<std::uint8_t>(30 + getDifficultyColor(track.difficulty).g / 10),
@@ -355,7 +340,6 @@ void TrackSelectState::handleInput(const sf::Event& event) {
         sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                               static_cast<float>(mouseEvent->position.y));
         
-        // Check track cards
         for (size_t i = 0; i < m_trackCards.size(); ++i) {
             if (m_trackCards[i].cardBg->getGlobalBounds().contains(mousePos)) {
                 if (m_selectedIndex != static_cast<int>(i)) {
@@ -365,7 +349,6 @@ void TrackSelectState::handleInput(const sf::Event& event) {
             }
         }
         
-        // Check buttons
         m_backHovered = m_backButton->getGlobalBounds().contains(mousePos);
         m_startHovered = m_startButton->getGlobalBounds().contains(mousePos);
     }
@@ -375,7 +358,6 @@ void TrackSelectState::handleInput(const sf::Event& event) {
             sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                                   static_cast<float>(mouseEvent->position.y));
             
-            // Track cards
             for (size_t i = 0; i < m_trackCards.size(); ++i) {
                 if (m_trackCards[i].cardBg->getGlobalBounds().contains(mousePos)) {
                     updateSelection(static_cast<int>(i));
@@ -383,7 +365,6 @@ void TrackSelectState::handleInput(const sf::Event& event) {
                 }
             }
             
-            // Buttons
             if (m_backButton->getGlobalBounds().contains(mousePos)) {
                 m_game->getStateManager()->popState();
             }
@@ -396,17 +377,75 @@ void TrackSelectState::handleInput(const sf::Event& event) {
 
 void TrackSelectState::confirmSelection() {
     if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_availableTracks.size())) {
-        std::cout << "[TrackSelect] Starting race: " << m_availableTracks[m_selectedIndex].name << std::endl;
-        m_game->getStateManager()->changeState(
-            std::make_unique<PlayState>(m_game, m_gameMode, &m_availableTracks[m_selectedIndex])
-        );
+        const auto& selectedTrack = m_availableTracks[m_selectedIndex];
+        std::cout << "[TrackSelect] Selected track: " << selectedTrack.name << std::endl;
+        
+        if (m_gameMode == GameMode::Campaign) {
+            auto campaignTracks = CampaignDataManager::getTracks();
+            
+            CampaignTrackData campaignTrack;
+            bool found = false;
+            
+            for (const auto& ct : campaignTracks) {
+                if (ct.trackId == selectedTrack.id || ct.name == selectedTrack.name) {
+                    campaignTrack = ct;
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                campaignTrack.id = m_selectedIndex + 1;
+                campaignTrack.trackId = selectedTrack.id;
+                campaignTrack.name = selectedTrack.name;
+                campaignTrack.description = selectedTrack.description;
+                campaignTrack.unlocked = true;
+                
+                if (selectedTrack.name == "Test Oval" || selectedTrack.id == "test_oval") {
+                    campaignTrack.requiredLaps = 5;
+                } else {
+                    campaignTrack.requiredLaps = selectedTrack.recommendedLaps;
+                }
+                
+                switch (selectedTrack.difficulty) {
+                    case TrackDifficulty::Easy:
+                        campaignTrack.difficulty = CampaignTrackDifficulty::Easy;
+                        break;
+                    case TrackDifficulty::Medium:
+                        campaignTrack.difficulty = CampaignTrackDifficulty::Medium;
+                        break;
+                    case TrackDifficulty::Hard:
+                    case TrackDifficulty::Expert:
+                        campaignTrack.difficulty = CampaignTrackDifficulty::Hard;
+                        break;
+                }
+                
+                campaignTrack.tasks[0] = CampaignTask(1, CampaignTaskType::FinishRace, 0.0f, "Complete the race");
+                campaignTrack.tasks[1] = CampaignTask(2, CampaignTaskType::BeatTime, 180.0f, "Finish under 3:00");
+                campaignTrack.tasks[2] = CampaignTask(3, CampaignTaskType::NoSpinouts, 0.0f, "No spinouts");
+            } else {
+                if (selectedTrack.name == "Test Oval" || selectedTrack.id == "test_oval") {
+                    campaignTrack.requiredLaps = 5;
+                }
+            }
+            
+            std::cout << "[TrackSelect] Going to TaskSelectState for Campaign (Laps: " 
+                      << campaignTrack.requiredLaps << ")" << std::endl;
+            m_game->getStateManager()->changeState(
+                std::make_unique<TaskSelectState>(m_game, campaignTrack, &selectedTrack)
+            );
+        } else {
+            std::cout << "[TrackSelect] Starting race directly" << std::endl;
+            m_game->getStateManager()->changeState(
+                std::make_unique<PlayState>(m_game, m_gameMode, &selectedTrack)
+            );
+        }
     }
 }
 
 void TrackSelectState::update(float deltaTime) {
     m_animTimer += deltaTime;
     
-    // Animate selected card glow
     for (auto& card : m_trackCards) {
         if (card.isSelected) {
             card.hoverGlow += deltaTime * 3.0f;
@@ -425,7 +464,6 @@ void TrackSelectState::update(float deltaTime) {
         }
     }
     
-    // Button hover effects
     if (m_backHovered) {
         m_backButton->setFillColor(sf::Color(80, 50, 50));
     } else {
@@ -442,10 +480,8 @@ void TrackSelectState::update(float deltaTime) {
 }
 
 void TrackSelectState::render(sf::RenderWindow& window) {
-    // Background
     window.clear(sf::Color(15, 15, 20));
     
-    // Subtle animated lines
     for (int i = 0; i < 8; ++i) {
         float xOffset = std::sin(m_animTimer * 0.3f + i * 0.4f) * 30.0f;
         sf::RectangleShape line(sf::Vector2f(2.0f, static_cast<float>(Config::WINDOW_HEIGHT)));
@@ -454,11 +490,9 @@ void TrackSelectState::render(sf::RenderWindow& window) {
         window.draw(line);
     }
     
-    // Header
     window.draw(*m_headerText);
     window.draw(*m_modeText);
     
-    // Track cards
     for (auto& card : m_trackCards) {
         window.draw(*card.cardBg);
         window.draw(*card.difficultyBadge);
@@ -468,7 +502,6 @@ void TrackSelectState::render(sf::RenderWindow& window) {
         window.draw(*card.difficultyText);
     }
     
-    // Detail panel
     window.draw(*m_detailPanel);
     window.draw(*m_trackPreview);
     window.draw(*m_detailName);
@@ -478,12 +511,10 @@ void TrackSelectState::render(sf::RenderWindow& window) {
     window.draw(*m_detailDifficulty);
     window.draw(*m_detailDescription);
     
-    // Buttons
     window.draw(*m_backButton);
     window.draw(*m_backText);
     window.draw(*m_startButton);
     window.draw(*m_startText);
     
-    // Hint
     window.draw(*m_hintText);
 }

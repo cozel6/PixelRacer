@@ -4,10 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <random>
-
-// ============================================================================
-// RoadSegment Implementation
-// ============================================================================
+#include <algorithm>
 
 RoadSegment::RoadSegment()
     : worldZ(0.0f)
@@ -24,21 +21,30 @@ RoadSegment::RoadSegment()
 {
     pothole.exists = false;
     pothole.wasHit = false;
+    repairPickup.exists = false;
+    repairPickup.collected = false;
 }
-
-// ============================================================================
-// Road Implementation
-// ============================================================================
 
 Road::Road()
     : m_playerZ(0.0f)
     , m_rng(std::random_device{}())
+    , m_potholeChance(RoadConfig::POTHOLE_SPAWN_CHANCE)
+    , m_repairChance(RoadConfig::REPAIR_SPAWN_CHANCE)
+    , m_potholeCount(0)
 {
 }
 
 void Road::generate(int segmentCount) {
+    generateWithDifficulty(segmentCount, EndlessDifficultyLevel::Medium);
+}
+
+void Road::generateWithDifficulty(int segmentCount, EndlessDifficultyLevel difficulty) {
     m_segments.clear();
     m_segments.reserve(segmentCount);
+
+    auto settings = EndlessDifficultySettings::getSettings(difficulty);
+    m_potholeChance = settings.potholeChance;
+    m_repairChance = settings.repairPickupChance;
 
     const int COLOR_PATTERN_LENGTH = 6;
     int adjustedCount = ((segmentCount + COLOR_PATTERN_LENGTH - 1) / COLOR_PATTERN_LENGTH) * COLOR_PATTERN_LENGTH;
@@ -54,6 +60,8 @@ void Road::generate(int segmentCount) {
         segment.grassColor = isDark ? sf::Color(16, 200, 16) : sf::Color(0, 154, 0);
         segment.rumbleColor = (i % 3 == 0) ? sf::Color::Red : sf::Color::White;
         segment.laneColor = sf::Color::White;
+        
+        segment.repairPickup.animTimer = static_cast<float>(i) * 0.1f;
 
         m_segments.push_back(segment);
     }
@@ -66,9 +74,13 @@ void Road::generate(int segmentCount) {
     addHill(pos, adjustedCount / 6, 600.0f); pos += adjustedCount / 6;
     addStraight(pos, adjustedCount / 6);
 
-    generatePotholes();
+    generatePotholesWithChance(m_potholeChance);
+    
+    // ✅ Initial pickups - folosim LOW_DAMAGE (jucătorul începe cu 0 DMG)
+    generateRepairPickupsFixed(RoadConfig::PICKUPS_LOW_DAMAGE);
 
-    std::cout << "Road generated (procedural): " << m_segments.size() << " segments" << std::endl;
+    std::cout << "[ROAD] Generated with " << settings.name << " difficulty" << std::endl;
+    std::cout << "[ROAD] Potholes: " << m_potholeCount << std::endl;
 }
 
 void Road::init(int segmentCount) {
@@ -89,45 +101,120 @@ void Road::init(int segmentCount) {
         segment.grassColor = isDark ? sf::Color(16, 200, 16) : sf::Color(0, 154, 0);
         segment.rumbleColor = (i % 3 == 0) ? sf::Color::Red : sf::Color::White;
         segment.laneColor = sf::Color::White;
+        
+        segment.repairPickup.animTimer = static_cast<float>(i) * 0.1f;
 
         m_segments.push_back(segment);
     }
 
     generatePotholes();
+    generateRepairPickupsFixed(RoadConfig::PICKUPS_LOW_DAMAGE);
 
     std::cout << "Road initialized (flat): " << m_segments.size() << " segments" << std::endl;
 }
 
-// ✅ Generează gropi aleatoriu pe segmente
-void Road::generatePotholes() {
-    std::uniform_real_distribution<float> chanceDist(0.0f, 1.0f);
-    std::uniform_real_distribution<float> positionDist(-500.0f, 500.0f);
-    std::uniform_real_distribution<float> widthDist(100.0f, 250.0f);
+// ✅ NEW: Regenerează pickup-urile bazat pe damage-ul curent
+void Road::regeneratePickupsForDamage(float currentDamage) {
+    // Șterge toate pickup-urile existente
+    for (auto& seg : m_segments) {
+        seg.repairPickup.exists = false;
+        seg.repairPickup.collected = false;
+    }
     
-    int potholeCount = 0;
+    // Determină câte pickup-uri să generăm
+    int pickupCount;
+    if (currentDamage < 30.0f) {
+        pickupCount = RoadConfig::PICKUPS_LOW_DAMAGE;  // 5 pickup-uri
+    } else if (currentDamage < 50.0f) {
+        pickupCount = RoadConfig::PICKUPS_MED_DAMAGE;  // 3 pickup-uri
+    } else {
+        pickupCount = RoadConfig::PICKUPS_HIGH_DAMAGE; // 1 pickup
+    }
     
-    // Skip primele 30 de segmente (zona de start)
-    for (size_t i = 30; i < m_segments.size(); ++i) {
-        if (chanceDist(m_rng) < RoadConfig::POTHOLE_SPAWN_CHANCE) {
-            m_segments[i].pothole.exists = true;
-            m_segments[i].pothole.offsetX = positionDist(m_rng);
-            m_segments[i].pothole.width = widthDist(m_rng);
-            m_segments[i].pothole.wasHit = false;
-            potholeCount++;
+    generateRepairPickupsFixed(pickupCount);
+    
+    std::cout << "[ROAD] Regenerated " << pickupCount << " pickups for " 
+              << currentDamage << " DMG" << std::endl;
+}
+
+// Modifică generateRepairPickupsFixed pentru poziționare random uniformă:
+void Road::generateRepairPickupsFixed(int count) {
+    std::uniform_real_distribution<float> positionDist(-350.0f, 350.0f);
+    
+    // ✅ Distribuie pickup-urile uniform pe circuit
+    int segmentCount = static_cast<int>(m_segments.size());
+    int spacing = segmentCount / (count + 1);  // Spațiere uniformă
+    
+    // Adaugă variație pentru a nu fi predictibil
+    std::uniform_int_distribution<int> offsetDist(-spacing / 3, spacing / 3);
+    
+    int pickupCount = 0;
+    
+    for (int i = 0; i < count; ++i) {
+        int basePos = spacing * (i + 1);
+        int offset = offsetDist(m_rng);
+        int segIdx = std::clamp(basePos + offset, 50, segmentCount - 1);
+        
+        // Caută un segment valid (fără groapă și fără pickup)
+        int attempts = 0;
+        while (attempts < 20 && 
+               (m_segments[segIdx].pothole.exists || m_segments[segIdx].repairPickup.exists)) {
+            segIdx = (segIdx + 1) % segmentCount;
+            if (segIdx < 50) segIdx = 50;
+            attempts++;
+        }
+        
+        if (!m_segments[segIdx].pothole.exists && !m_segments[segIdx].repairPickup.exists) {
+            m_segments[segIdx].repairPickup.exists = true;
+            m_segments[segIdx].repairPickup.offsetX = positionDist(m_rng);
+            m_segments[segIdx].repairPickup.width = 80.0f;
+            m_segments[segIdx].repairPickup.healAmount = RoadConfig::REPAIR_HEAL_AMOUNT;
+            m_segments[segIdx].repairPickup.collected = false;
+            pickupCount++;
         }
     }
     
-    std::cout << "[ROAD] Generated " << potholeCount << " potholes (25% chance)" << std::endl;
+    std::cout << "[ROAD] Generated " << pickupCount << " repair pickups" << std::endl;
 }
 
-// ✅ Verifică coliziunea cu groapa
+void Road::generatePotholes() {
+    generatePotholesWithChance(RoadConfig::POTHOLE_SPAWN_CHANCE);
+}
+
+// Înlocuiește generatePotholesWithChance:
+void Road::generatePotholesWithChance(float chance) {
+    std::uniform_real_distribution<float> chanceDist(0.0f, 1.0f);
+    std::uniform_real_distribution<float> positionDist(-400.0f, 400.0f);
+    std::uniform_real_distribution<float> widthDist(RoadConfig::POTHOLE_MIN_WIDTH, RoadConfig::POTHOLE_MAX_WIDTH);
+    
+    m_potholeCount = 0;
+    
+    int lastPotholeSegment = -10;
+    
+    for (size_t i = 50; i < m_segments.size(); ++i) {
+        if (static_cast<int>(i) - lastPotholeSegment < 5) {
+            continue;
+        }
+        
+        if (chanceDist(m_rng) < chance) {
+            m_segments[i].pothole.exists = true;
+            m_segments[i].pothole.offsetX = positionDist(m_rng);
+            m_segments[i].pothole.width = widthDist(m_rng);  // ✅ FIX: era mSegments
+            m_segments[i].pothole.wasHit = false;
+            m_potholeCount++;
+            lastPotholeSegment = static_cast<int>(i);
+        }
+    }
+    
+    std::cout << "[ROAD] Generated " << m_potholeCount << " potholes" << std::endl;
+}
+
 bool Road::checkPotholeCollision(float wheelX, float wheelZ, float& damageOut) {
     RoadSegment* segment = getSegmentAt(wheelZ);
     if (!segment || !segment->pothole.exists || segment->pothole.wasHit) {
         return false;
     }
     
-    // Verifică dacă roata e în groapa (pe X)
     float potholeLeft = segment->pothole.offsetX - segment->pothole.width / 2.0f;
     float potholeRight = segment->pothole.offsetX + segment->pothole.width / 2.0f;
     
@@ -140,9 +227,33 @@ bool Road::checkPotholeCollision(float wheelX, float wheelZ, float& damageOut) {
     return false;
 }
 
+bool Road::checkRepairPickupCollision(float playerX, float playerZ, float& healOut) {
+    RoadSegment* segment = getSegmentAt(playerZ);
+    if (!segment || !segment->repairPickup.exists || segment->repairPickup.collected) {
+        return false;
+    }
+    
+    float pickupLeft = segment->repairPickup.offsetX - segment->repairPickup.width / 2.0f;
+    float pickupRight = segment->repairPickup.offsetX + segment->repairPickup.width / 2.0f;
+    
+    if (playerX >= pickupLeft - 60.0f && playerX <= pickupRight + 60.0f) {
+        segment->repairPickup.collected = true;
+        healOut = segment->repairPickup.healAmount;
+        return true;
+    }
+    
+    return false;
+}
+
 void Road::resetPotholes() {
     for (auto& seg : m_segments) {
         seg.pothole.wasHit = false;
+    }
+}
+
+void Road::resetPickups() {
+    for (auto& seg : m_segments) {
+        seg.repairPickup.collected = false;
     }
 }
 
@@ -167,8 +278,15 @@ void Road::addHill(int startIndex, int count, float height) {
     }
 }
 
-void Road::update(float playerZ) {
+void Road::update(float playerZ, float deltaTime) {
     m_playerZ = playerZ;
+    
+    for (auto& seg : m_segments) {
+        if (seg.repairPickup.exists && !seg.repairPickup.collected) {
+            seg.repairPickup.animTimer += deltaTime;
+            seg.repairPickup.bobOffset = std::sin(seg.repairPickup.animTimer * RoadConfig::PICKUP_BOB_SPEED) * RoadConfig::PICKUP_BOB_AMOUNT;
+        }
+    }
 }
 
 void Road::render(sf::RenderWindow& window, float cameraZ) {
@@ -208,6 +326,17 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
     );
 
     const float CURVE_AMPLIFICATION = 2.5f;
+    
+    // ═══════════════════════════════════════════════════════════════
+    // Colectăm pickup-uri pentru rendering
+    // ═══════════════════════════════════════════════════════════════
+    struct PickupRenderData {
+        float screenX, screenY;
+        float scale;
+        float pulse;
+        int segmentIndex;
+    };
+    std::vector<PickupRenderData> pickupsToRender;
     
     for (int y = static_cast<int>(windowHeight); y >= static_cast<int>(windowHeight * 0.5f); --y) {
         float screenYNorm = (y - windowHeight * 0.5f) / windowHeight;
@@ -271,28 +400,140 @@ void Road::render(sf::RenderWindow& window, float cameraZ) {
             window.draw(rightRumble);
             
             // ═══════════════════════════════════════════════════════════════
-            // ✅ POTHOLE - PATĂ ÎNCHISĂ PE ASFALT (PARTE DIN TILE)
+            // ✅ START/FINISH LINE - Checkered pattern (un singur segment)
             // ═══════════════════════════════════════════════════════════════
+            if (segmentIndex == 0) {
+                float checkerWidth = roadWidth * 0.15f;
+                int numCheckers = static_cast<int>((roadWidth * 2.0f) / checkerWidth) + 1;
+                
+                for (int c = 0; c < numCheckers; ++c) {
+                    float checkerX = roadCenterX - roadWidth + c * checkerWidth;
+                    bool isWhite = (c % 2 == 0);
+                    sf::Color checkerColor = isWhite ? sf::Color::White : sf::Color(15, 15, 15);
+                    
+                    sf::RectangleShape checker(sf::Vector2f(checkerWidth + 1.0f, 1.0f));
+                    checker.setPosition(sf::Vector2f(checkerX, static_cast<float>(y)));
+                    checker.setFillColor(checkerColor);
+                    window.draw(checker);
+                }
+            }
+            
+            // POTHOLE
             if (seg.pothole.exists) {
-                // Calculăm poziția și lățimea gropii pe ecran
                 float potholeScreenX = roadCenterX + (seg.pothole.offsetX / static_cast<float>(RoadConfig::ROAD_WIDTH)) * roadWidth * 2.0f;
                 float potholeScreenWidth = (seg.pothole.width / static_cast<float>(RoadConfig::ROAD_WIDTH)) * roadWidth * 2.0f;
                 
-                // Minim vizibil
                 potholeScreenWidth = std::max(potholeScreenWidth, 8.0f);
                 
-                // Culoarea gropii - mult mai închisă decât asfaltul!
                 sf::Color potholeColor = seg.pothole.wasHit ? 
-                    sf::Color(60, 55, 50) :     // Mai deschis dacă a fost lovită
-                    sf::Color(30, 25, 20);      // Foarte închis - groapă activă
+                    sf::Color(60, 55, 50) :
+                    sf::Color(30, 25, 20);
                 
-                // Desenăm groapa peste asfalt
                 sf::RectangleShape potholeLine(sf::Vector2f(potholeScreenWidth, 1.0f));
                 potholeLine.setPosition(sf::Vector2f(potholeScreenX - potholeScreenWidth / 2.0f, static_cast<float>(y)));
                 potholeLine.setFillColor(potholeColor);
                 window.draw(potholeLine);
             }
+            
+            // ✅ Colectăm pickup pentru rendering
+            if (seg.repairPickup.exists && !seg.repairPickup.collected) {
+                bool alreadyAdded = false;
+                for (const auto& p : pickupsToRender) {
+                    if (p.segmentIndex == segmentIndex) {
+                        alreadyAdded = true;
+                        break;
+                    }
+                }
+                
+                if (!alreadyAdded) {
+                    float pickupScreenX = roadCenterX + (seg.repairPickup.offsetX / static_cast<float>(RoadConfig::ROAD_WIDTH)) * roadWidth * 2.0f;
+                    
+                    // ✅ FIX: Calculăm Y-ul pickup-ului relativ la drum
+                    // Folosim aceeași logică ca pentru drum, dar deplasăm în sus
+                    float floatHeight = RoadConfig::PICKUP_FLOAT_HEIGHT + seg.repairPickup.bobOffset;
+                    float pickupScreenY = static_cast<float>(y) - floatHeight * scale * 50.0f;
+                    
+                    float pulse = 0.8f + 0.2f * std::sin(seg.repairPickup.animTimer * 4.0f);
+                    
+                    pickupsToRender.push_back({
+                        pickupScreenX,
+                        pickupScreenY,
+                        scale,  // Folosim exact același scale ca drumul
+                        pulse,
+                        segmentIndex
+                    });
+                }
+            }
         }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // ✅ RENDER PICKUP-URI - Cruci verzi plutitoare (MAI MARI)
+    // ═══════════════════════════════════════════════════════════════
+    std::sort(pickupsToRender.begin(), pickupsToRender.end(),
+        [](const PickupRenderData& a, const PickupRenderData& b) {
+            return a.scale < b.scale;  // Departe -> aproape
+        });
+    
+    for (const auto& pickup : pickupsToRender) {
+        if (pickup.scale < 0.00001f) continue;
+        
+        // ✅ MĂRIT: Factor de scalare crescut de la 3500 la 6000
+        float baseSize = 6000.0f;
+        float size = pickup.scale * baseSize;
+        
+        // ✅ MĂRIT: Clamp-uri mai mari
+        size = std::clamp(size, 5.0f, 120.0f);
+        
+        if (size < 5.0f) continue;
+        
+        // ✅ Proporții cruce mai groasă
+        float crossWidth = size * 0.4f;
+        float crossLength = size;
+        
+        // Culoare verde cu pulsare
+        sf::Color crossColor(
+            static_cast<std::uint8_t>(40 * pickup.pulse),
+            static_cast<std::uint8_t>(230 * pickup.pulse),
+            static_cast<std::uint8_t>(40 * pickup.pulse)
+        );
+        
+        float outlineThickness = std::max(1.5f, size * 0.08f);
+        
+        // CRUCEA - Bară verticală
+        sf::RectangleShape verticalBar(sf::Vector2f(crossWidth, crossLength));
+        verticalBar.setOrigin(sf::Vector2f(crossWidth / 2.0f, crossLength / 2.0f));
+        verticalBar.setPosition(sf::Vector2f(pickup.screenX, pickup.screenY));
+        verticalBar.setFillColor(crossColor);
+        verticalBar.setOutlineColor(sf::Color(120, 255, 120));
+        verticalBar.setOutlineThickness(outlineThickness);
+        
+        // CRUCEA - Bară orizontală
+        sf::RectangleShape horizontalBar(sf::Vector2f(crossLength, crossWidth));
+        horizontalBar.setOrigin(sf::Vector2f(crossLength / 2.0f, crossWidth / 2.0f));
+        horizontalBar.setPosition(sf::Vector2f(pickup.screenX, pickup.screenY));
+        horizontalBar.setFillColor(crossColor);
+        horizontalBar.setOutlineColor(sf::Color(120, 255, 120));
+        horizontalBar.setOutlineThickness(outlineThickness);
+        
+        // GLOW EFFECT - mai mare
+        float glowRadius = size * 1.0f;
+        sf::CircleShape glow(glowRadius);
+        glow.setOrigin(sf::Vector2f(glowRadius, glowRadius));
+        glow.setPosition(sf::Vector2f(pickup.screenX, pickup.screenY));
+        glow.setFillColor(sf::Color(50, 255, 50, static_cast<std::uint8_t>(50 * pickup.pulse)));
+        
+        window.draw(glow);
+        window.draw(verticalBar);
+        window.draw(horizontalBar);
+        
+        // Centru strălucitor - mai mare
+        float centerRadius = crossWidth * 0.5f;
+        sf::CircleShape center(centerRadius);
+        center.setOrigin(sf::Vector2f(centerRadius, centerRadius));
+        center.setPosition(sf::Vector2f(pickup.screenX, pickup.screenY));
+        center.setFillColor(sf::Color(220, 255, 220, static_cast<std::uint8_t>(240 * pickup.pulse)));
+        window.draw(center);
     }
 }
 
@@ -348,4 +589,77 @@ const RoadSegment* Road::getSegmentAt(float z) const {
     if (index < 0) index += static_cast<int>(m_segments.size());
 
     return &m_segments[index];
+}
+
+// Adaugă o nouă funcție pentru Campaign:
+
+void Road::generateForCampaign(int segmentCount) {
+    m_segments.clear();
+    m_segments.reserve(segmentCount);
+
+    const int COLOR_PATTERN_LENGTH = 6;
+    int adjustedCount = ((segmentCount + COLOR_PATTERN_LENGTH - 1) / COLOR_PATTERN_LENGTH) * COLOR_PATTERN_LENGTH;
+
+    for (int i = 0; i < adjustedCount; ++i) {
+        RoadSegment segment;
+        segment.worldZ = i * RoadConfig::SEGMENT_LENGTH;
+        segment.curve = 0.0f;
+        segment.worldY = 0.0f;
+
+        bool isDark = ((i / 3) % 2) == 0;
+        segment.roadColor = isDark ? sf::Color(107, 107, 107) : sf::Color(105, 105, 105);
+        segment.grassColor = isDark ? sf::Color(16, 200, 16) : sf::Color(0, 154, 0);
+        segment.rumbleColor = (i % 3 == 0) ? sf::Color::Red : sf::Color::White;
+        segment.laneColor = sf::Color::White;
+        
+        // ✅ NO potholes or pickups in Campaign
+        segment.pothole.exists = false;
+        segment.repairPickup.exists = false;
+
+        m_segments.push_back(segment);
+    }
+
+    // Layout-ul drumului (curbe, dealuri)
+    int pos = 0;
+    addStraight(pos, adjustedCount / 6);     pos += adjustedCount / 6;
+    addCurve(pos, adjustedCount / 8, 6.0f);  pos += adjustedCount / 8;
+    addStraight(pos, adjustedCount / 10);    pos += adjustedCount / 10;
+    addCurve(pos, adjustedCount / 8, -6.0f); pos += adjustedCount / 8;
+    addHill(pos, adjustedCount / 6, 400.0f); pos += adjustedCount / 6;
+    addStraight(pos, adjustedCount / 6);
+
+    std::cout << "[ROAD] Generated for CAMPAIGN mode (no obstacles)" << std::endl;
+}
+
+// Adaugă această funcție după init():
+void Road::initClean(int segmentCount) {
+    m_segments.clear();
+    m_segments.reserve(segmentCount);
+
+    const int COLOR_PATTERN_LENGTH = 6;
+    int adjustedCount = ((segmentCount + COLOR_PATTERN_LENGTH - 1) / COLOR_PATTERN_LENGTH) * COLOR_PATTERN_LENGTH;
+
+    for (int i = 0; i < adjustedCount; ++i) {
+        RoadSegment segment;
+        segment.worldZ = i * RoadConfig::SEGMENT_LENGTH;
+        segment.curve = 0.0f;
+        segment.worldY = 0.0f;
+
+        bool isDark = ((i / 3) % 2) == 0;
+        segment.roadColor = isDark ? sf::Color(107, 107, 107) : sf::Color(105, 105, 105);
+        segment.grassColor = isDark ? sf::Color(16, 200, 16) : sf::Color(0, 154, 0);
+        segment.rumbleColor = (i % 3 == 0) ? sf::Color::Red : sf::Color::White;
+        segment.laneColor = sf::Color::White;
+        
+        // Nu generăm gropi sau pickup-uri
+        segment.pothole.exists = false;
+        segment.pothole.wasHit = false;
+        segment.repairPickup.exists = false;
+        segment.repairPickup.collected = false;
+
+        m_segments.push_back(segment);
+    }
+
+    m_potholeCount = 0;
+    std::cout << "[ROAD] Initialized clean (no obstacles): " << m_segments.size() << " segments" << std::endl;
 }

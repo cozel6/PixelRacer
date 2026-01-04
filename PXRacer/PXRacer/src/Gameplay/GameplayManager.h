@@ -26,6 +26,7 @@ struct StartBoostResult {
 class GameplayManager {
 public:
     GameplayManager(GameMode mode, const TrackDefinition* track = nullptr);
+    GameplayManager(GameMode mode, EndlessDifficultyLevel difficulty);
     
     void update(float deltaTime);
     void render(sf::RenderWindow& window);
@@ -39,7 +40,6 @@ public:
     const StartBoostResult& getBoostResult() const { return m_boostResult; }
     bool hasBoostWindowPassed() const { return m_boostWindowPassed; }
     
-    // ✅ NEW: Game over
     bool isGameOver() const { return m_player.isDestroyed(); }
     
     // Getters
@@ -55,11 +55,28 @@ public:
     float getCurrentLapTime() const { return m_currentLapTime; }
     float getBestLapTime() const { return m_bestLapTime; }
     float getLastLapTime() const { return m_lastLapTime; }
+    float getLastLapMultiplier() const { return m_lapScoreMultiplier; }
+    float getPreviousLapTime() const { return m_previousLapTime; }
     
     const Player& getPlayer() const { return m_player; }
+    
+    // Endless mode getters
+    EndlessDifficultyLevel getEndlessDifficulty() const { return m_endlessDifficulty; }
+    float getHighscoreKm() const { return m_stats.highscoreKm; }
+    int getLapsWithoutDamage() const { return m_stats.lapsWithoutDamage; }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CAMPAIGN MODE - Public interface
+    // ═══════════════════════════════════════════════════════════════
+    void setCampaignTrack(const CampaignTrack& track);  // ✅ ADD THIS
+    const CampaignProgress& getCampaignProgress() const { return m_campaignProgress; }
+    const CampaignTrack& getCampaignTrack() const { return m_campaignTrack; }
+    bool isObjectiveCompleted() const { return m_objectiveCompleted; }
+    bool isRaceFinished() const { return m_raceFinished; }
 
 private:
     void initializeForMode();
+    void initializeEndless(EndlessDifficultyLevel difficulty);
     void loadTrack(const TrackDefinition& track);
     void handleTrackLooping();
     
@@ -71,7 +88,19 @@ private:
     void checkCheckpoints();
     void evaluateCornerPerformance();
     void checkPotholeCollisions();
+    void checkRepairPickups();
     
+    // ═══════════════════════════════════════════════════════════════
+    // CAMPAIGN MODE - Private members
+    // ═══════════════════════════════════════════════════════════════
+    CampaignTrack m_campaignTrack;
+    CampaignProgress m_campaignProgress;
+    bool m_objectiveCompleted = false;
+    bool m_raceFinished = false;
+    
+    void updateCampaignProgress(float deltaTime);
+    void checkCampaignObjective();
+
     WheelSurfaces getWheelSurfaces() const;
     SurfaceType getSurfaceTypeAt(float x, float z) const;
     
@@ -79,6 +108,10 @@ private:
     Player m_player;
     Road m_road;
     std::string m_trackName;
+    
+    // Endless difficulty
+    EndlessDifficultyLevel m_endlessDifficulty = EndlessDifficultyLevel::Medium;
+    EndlessDifficultySettings m_difficultySettings;
     
     // COUNTDOWN STATE
     bool m_raceStarted;
@@ -108,4 +141,14 @@ private:
     float m_cornerEntrySpeed = 0.0f;
     
     int m_lapCount = 0;
+    
+    // Lap damage tracking
+    float m_lapStartDamage = 0.0f;
+    bool m_lapHadDamage = false;
+    
+    // Lap scoring system
+    float m_previousLapTime = 0.0f;
+    float m_lapScoreMultiplier = 1.0f;
+    
+    void calculateLapScore();
 };

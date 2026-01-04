@@ -29,8 +29,12 @@ GameplayManager::GameplayManager(GameMode mode, const TrackDefinition* track)
     , m_currentLapTime(0.0f)
     , m_bestLapTime(0.0f)
     , m_lastLapTime(0.0f)
+    , m_endlessDifficulty(EndlessDifficultyLevel::Medium)
+    , m_lapStartDamage(0.0f)
+    , m_lapHadDamage(false)
 {
     m_boostResult = {false, false, false, false, 1.0f};
+    m_difficultySettings = EndlessDifficultySettings::getSettings(m_endlessDifficulty);
     
     if (track) {
         std::cout << "[RACE] Building track: " << track->name << std::endl;
@@ -48,10 +52,41 @@ GameplayManager::GameplayManager(GameMode mode, const TrackDefinition* track)
     std::cout << "[RACE] Countdown starting..." << std::endl;
 }
 
+// ✅ NEW: Constructor pentru Endless cu dificultate
+GameplayManager::GameplayManager(GameMode mode, EndlessDifficultyLevel difficulty)
+    : m_mode(mode)
+    , m_raceStarted(false)
+    , m_countdownPhase(CountdownPhase::Ready)
+    , m_countdownTimer(0.0f)
+    , m_lightInterval(LIGHT_INTERVAL)
+    , m_clutchHeld(false)
+    , m_boostWindowTimer(0.0f)
+    , m_boostWindowPassed(false)
+    , m_activeBoostTimer(0.0f)
+    , m_currentBoostMultiplier(1.0f)
+    , m_currentLapTime(0.0f)
+    , m_bestLapTime(0.0f)
+    , m_lastLapTime(0.0f)
+    , m_endlessDifficulty(difficulty)
+    , m_lapStartDamage(0.0f)
+    , m_lapHadDamage(false)
+{
+    m_boostResult = {false, false, false, false, 1.0f};
+    m_difficultySettings = EndlessDifficultySettings::getSettings(difficulty);
+    
+    initializeEndless(difficulty);
+    m_trackName = "Endless - " + m_difficultySettings.name;
+    
+    m_countdownTimer = 1.0f;
+    m_countdownPhase = CountdownPhase::Ready;
+    
+    std::cout << "[ENDLESS] Mode started with " << m_difficultySettings.name << " difficulty" << std::endl;
+}
+
 void GameplayManager::initializeForMode() {
     switch (m_mode) {
         case GameMode::Endless:
-            m_road.generate(500);
+            m_road.generateWithDifficulty(500, m_endlessDifficulty);
             break;
         case GameMode::Campaign:
             m_road.generate(200);
@@ -60,6 +95,14 @@ void GameplayManager::initializeForMode() {
             m_road.generate(300);
             break;
     }
+}
+
+// ✅ NEW: Initialize Endless mode cu dificultate specifică
+void GameplayManager::initializeEndless(EndlessDifficultyLevel difficulty) {
+    m_road.generateWithDifficulty(500, difficulty);
+    m_stats = EndlessStats{};  // Reset stats
+    m_lapStartDamage = 0.0f;
+    m_lapHadDamage = false;
 }
 
 void GameplayManager::loadTrack(const TrackDefinition& track) {
@@ -75,65 +118,50 @@ void GameplayManager::updateCountdown(float deltaTime) {
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light1;
                 m_countdownTimer = m_lightInterval;
-                std::cout << "[COUNTDOWN] Light 1 ON" << std::endl;
             }
             break;
-            
         case CountdownPhase::Light1:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light2;
                 m_countdownTimer = m_lightInterval;
-                std::cout << "[COUNTDOWN] Light 2 ON" << std::endl;
             }
             break;
-            
         case CountdownPhase::Light2:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light3;
                 m_countdownTimer = m_lightInterval;
-                std::cout << "[COUNTDOWN] Light 3 ON" << std::endl;
             }
             break;
-            
         case CountdownPhase::Light3:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light4;
                 m_countdownTimer = m_lightInterval;
-                std::cout << "[COUNTDOWN] Light 4 ON" << std::endl;
             }
             break;
-            
         case CountdownPhase::Light4:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light5;
                 m_countdownTimer = m_lightInterval;
-                std::cout << "[COUNTDOWN] Light 5 ON - All reds!" << std::endl;
             }
             break;
-            
         case CountdownPhase::Light5:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Go;
                 m_countdownTimer = GO_DISPLAY_TIME;
                 m_boostWindowTimer = GOOD_WINDOW;
                 m_raceStarted = true;
-                std::cout << "[COUNTDOWN] LIGHTS OUT! GO GO GO!" << std::endl;
             }
             break;
-            
         case CountdownPhase::Go:
             m_boostWindowTimer -= deltaTime;
             if (m_boostWindowTimer <= 0.0f) {
                 m_boostWindowPassed = true;
             }
-            
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Finished;
                 m_boostWindowPassed = true;
-                std::cout << "[COUNTDOWN] Finished" << std::endl;
             }
             break;
-            
         case CountdownPhase::Finished:
             break;
     }
@@ -156,23 +184,19 @@ void GameplayManager::handleStartInput(bool clutchPressed) {
             m_boostResult.boostMultiplier = PERFECT_BOOST;
             m_activeBoostTimer = BOOST_DURATION;
             m_currentBoostMultiplier = PERFECT_BOOST;
-            std::cout << "[START] PERFECT START! 2x BOOST!" << std::endl;
         } else if (timeSinceGo <= GOOD_WINDOW) {
             m_boostResult.good = true;
             m_boostResult.boostMultiplier = GOOD_BOOST;
             m_activeBoostTimer = BOOST_DURATION;
             m_currentBoostMultiplier = GOOD_BOOST;
-            std::cout << "[START] Good start! 1.5x boost!" << std::endl;
         } else {
             m_boostResult.boostMultiplier = 1.0f;
-            std::cout << "[START] Normal start" << std::endl;
         }
     } else if (m_countdownPhase != CountdownPhase::Finished) {
         m_boostResult.jumpStart = true;
         m_boostResult.boostMultiplier = 0.0f;
         m_activeBoostTimer = JUMP_START_PENALTY;
         m_currentBoostMultiplier = 0.0f;
-        std::cout << "[START] JUMP START! 3 second penalty!" << std::endl;
     }
 }
 
@@ -197,7 +221,7 @@ void GameplayManager::update(float deltaTime) {
     }
     
     if (m_boostResult.jumpStart && m_activeBoostTimer > 0.0f) {
-        m_road.update(m_player.getZ());
+        m_road.update(m_player.getZ(), deltaTime);
         return;
     }
     
@@ -208,8 +232,20 @@ void GameplayManager::update(float deltaTime) {
     float roadCurve = segment ? segment->curve : 0.0f;
     m_player.update(deltaTime, wheelSurfaces, roadCurve);
     
-    // ✅ CHECK POTHOLE COLLISIONS (integrate in Road)
-    checkPotholeCollisions();
+    // Campaign mode updates
+    if (m_mode == GameMode::Campaign) {
+        updateCampaignProgress(deltaTime);
+        
+        if (m_raceFinished) {
+            return;  // Oprim update-ul când cursa s-a terminat
+        }
+    }
+    
+    // NU apelăm checkPotholeCollisions() și checkRepairPickups() în Campaign
+    if (m_mode == GameMode::Endless) {
+        checkPotholeCollisions();
+        checkRepairPickups();
+    }
     
     if (m_currentBoostMultiplier > 1.0f && m_activeBoostTimer > 0.0f) {
         float currentSpeed = m_player.getSpeed();
@@ -217,6 +253,7 @@ void GameplayManager::update(float deltaTime) {
         m_player.setSpeed(std::min(boostedSpeed, PlayerConfig::MAX_SPEED * 1.1f));
     }
     
+    // ✅ FIX: Adaugă apelul la handleTrackLooping() pentru a detecta trecerea liniei de finish
     handleTrackLooping();
     
     if (m_mode == GameMode::Endless) {
@@ -226,7 +263,7 @@ void GameplayManager::update(float deltaTime) {
         evaluateCornerPerformance();
     }
     
-    m_road.update(m_player.getZ());
+    m_road.update(m_player.getZ(), deltaTime);
 }
 
 void GameplayManager::checkPotholeCollisions() {
@@ -235,21 +272,28 @@ void GameplayManager::checkPotholeCollisions() {
     
     float damage = 0.0f;
     
-    if (m_road.checkPotholeCollision(flX, flZ, damage)) {
+    if (m_road.checkPotholeCollision(flX, flZ, damage) ||
+        m_road.checkPotholeCollision(frX, frZ, damage) ||
+        m_road.checkPotholeCollision(rlX, rlZ, damage) ||
+        m_road.checkPotholeCollision(rrX, rrZ, damage)) {
+        
         m_player.addDamage(damage);
-        std::cout << "[POTHOLE] Front-left wheel hit! Damage: " << damage << std::endl;
+        m_lapHadDamage = true;  // ✅ Track damage pentru bonus
+        std::cout << "[POTHOLE] Hit! Damage: " << damage << std::endl;
     }
-    if (m_road.checkPotholeCollision(frX, frZ, damage)) {
-        m_player.addDamage(damage);
-        std::cout << "[POTHOLE] Front-right wheel hit! Damage: " << damage << std::endl;
-    }
-    if (m_road.checkPotholeCollision(rlX, rlZ, damage)) {
-        m_player.addDamage(damage);
-        std::cout << "[POTHOLE] Rear-left wheel hit! Damage: " << damage << std::endl;
-    }
-    if (m_road.checkPotholeCollision(rrX, rrZ, damage)) {
-        m_player.addDamage(damage);
-        std::cout << "[POTHOLE] Rear-right wheel hit! Damage: " << damage << std::endl;
+}
+
+// ✅ NEW: Check repair pickup collisions
+void GameplayManager::checkRepairPickups() {
+    float healAmount = 0.0f;
+    
+    if (m_road.checkRepairPickupCollision(m_player.getX(), m_player.getZ(), healAmount)) {
+        float oldDamage = m_player.getTotalDamage();
+        m_player.repair(healAmount);
+        m_stats.repairPickupsCollected++;
+        
+        std::cout << "[REPAIR] Collected! Healed " << healAmount 
+                  << " DMG (" << oldDamage << " -> " << m_player.getTotalDamage() << ")" << std::endl;
     }
 }
 
@@ -260,10 +304,65 @@ void GameplayManager::handleTrackLooping() {
     if (playerZ >= roadLength) {
         m_lastLapTime = m_currentLapTime;
         
-        if (m_bestLapTime == 0.0f || m_currentLapTime < m_bestLapTime) {
-            m_bestLapTime = m_currentLapTime;
-            std::cout << "[LAP] NEW BEST: " << m_bestLapTime << "s!" << std::endl;
+        // ═══════════════════════════════════════════════════════════════
+        // CAMPAIGN MODE - Track lap progress
+        // ═══════════════════════════════════════════════════════════════
+        if (m_mode == GameMode::Campaign) {
+            m_campaignProgress.currentLap++;
+            
+            // Update best lap time
+            if (m_campaignProgress.bestLapTime == 0.0f || 
+                m_currentLapTime < m_campaignProgress.bestLapTime) {
+                m_campaignProgress.bestLapTime = m_currentLapTime;
+            }
+            
+            // Track perfect laps
+            if (m_campaignProgress.currentLapPerfect) {
+                m_campaignProgress.perfectLapsCount++;
+                std::cout << "[CAMPAIGN] Perfect lap! Total: " 
+                          << m_campaignProgress.perfectLapsCount << std::endl;
+            }
+            m_campaignProgress.currentLapPerfect = true;  // Reset pentru tura următoare
+            
+            std::cout << "[CAMPAIGN] Lap " << m_campaignProgress.currentLap 
+                      << "/" << m_campaignProgress.totalLaps 
+                      << " | Time: " << m_currentLapTime << "s" << std::endl;
+                      
+            // Check dacă am terminat cursa
+            checkCampaignObjective();
         }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // ENDLESS MODE - Scoring
+        // ═══════════════════════════════════════════════════════════════
+        if (m_mode == GameMode::Endless) {
+            calculateLapScore();
+            
+            // Update best lap
+            bool isNewBestLap = false;
+            if (m_bestLapTime == 0.0f || m_currentLapTime < m_bestLapTime) {
+                m_bestLapTime = m_currentLapTime;
+                isNewBestLap = true;
+            }
+            
+            // Aplică bonus pentru new best lap
+            if (isNewBestLap && m_lapCount > 0) {
+                float bestLapBonus = 100.0f * m_difficultySettings.bonusMultiplier;
+                m_stats.currentScore += bestLapBonus;
+                std::cout << "[NEW BEST LAP] Bonus! +" << bestLapBonus << " points!" << std::endl;
+            }
+            
+            // Check pentru bonus lap fără damage
+            if (!m_lapHadDamage && m_mode == GameMode::Endless) {
+                m_stats.lapsWithoutDamage++;
+                float bonus = EndlessConfigValues::NO_DAMAGE_LAP_BONUS * m_difficultySettings.bonusMultiplier;
+                m_stats.currentScore += bonus;
+                std::cout << "[LAP BONUS] No damage! +" << bonus << " points!" << std::endl;
+            }
+        }
+        
+        // Salvează timpul curent pentru comparație
+        m_previousLapTime = m_currentLapTime;
         
         m_currentLapTime = 0.0f;
         m_lapCount++;
@@ -271,14 +370,51 @@ void GameplayManager::handleTrackLooping() {
         float overflow = playerZ - roadLength;
         m_player.setZ(overflow);
         
-        // ✅ Reset potholes for new lap
-        m_road.resetPotholes();
+        // Doar pentru Endless mode - regenerează obstacole
+        if (m_mode == GameMode::Endless) {
+            m_road.resetPotholes();
+            m_road.regeneratePickupsForDamage(m_player.getTotalDamage());
+        }
         
-        std::cout << "[LAP " << m_lapCount << "] Time: " << m_lastLapTime << "s" << std::endl;
+        // Reset lap damage tracking
+        m_lapStartDamage = m_player.getTotalDamage();
+        m_lapHadDamage = false;
+        
+        std::cout << "[LAP " << m_lapCount << "] Time: " << m_lastLapTime 
+                  << "s, Score: " << m_stats.currentScore << std::endl;
+                  
     } else if (playerZ < 0.0f) {
         float underflow = playerZ + roadLength;
         m_player.setZ(underflow);
     }
+}
+
+void GameplayManager::calculateLapScore() {
+    float baseScore = 100.0f;
+    float multiplier = 1.0f;
+    
+    // Dacă nu e prima tură, verificăm dacă am fost mai rapizi
+    if (m_previousLapTime > 0.0f && m_lapCount > 0) {
+        float delta = m_previousLapTime - m_currentLapTime;
+        
+        if (delta > 0.0f) {
+            // Am fost MAI RAPIZI! Calculăm multiplicatorul
+            // Formula: 1.0 + (delta_secunde * 0.5)
+            multiplier = 1.0f + (delta * 0.5f);
+            multiplier = std::min(multiplier, 5.0f);  // Cap la 5x
+            
+            std::cout << "[LAP SCORE] " << delta << "s faster! Multiplier: " << multiplier << "x" << std::endl;
+        } else {
+            std::cout << "[LAP SCORE] " << (-delta) << "s slower. Base score only." << std::endl;
+        }
+    }
+    
+    float finalScore = baseScore * multiplier * m_difficultySettings.bonusMultiplier;
+    m_stats.currentScore += finalScore;
+    
+    m_lapScoreMultiplier = multiplier;
+    
+    std::cout << "[LAP SCORE] +" << finalScore << " points" << std::endl;
 }
 
 WheelSurfaces GameplayManager::getWheelSurfaces() const {
@@ -333,17 +469,17 @@ void GameplayManager::updateEndlessScoring(float deltaTime) {
     
     m_stats.totalDistance += speed * deltaTime;
     m_stats.topSpeed = std::max(m_stats.topSpeed, speedKmh);
-    m_stats.averageSpeed = (m_stats.averageSpeed * (m_stats.timeElapsed - deltaTime) + speedKmh * deltaTime) / m_stats.timeElapsed;
     
-    float baseScore = speed * deltaTime * 1.0f;
-    float speedBonus = std::max(0.0f, (speedKmh - 100.0f) / 100.0f);
-    float multiplier = 1.0f + speedBonus;
-    
-    if (m_player.getSpeed() < PlayerConfig::MAX_SPEED * 0.5f) {
-        multiplier *= 0.5f;
+    // Calculăm media vitezei
+    if (m_stats.timeElapsed > 0.0f) {
+        m_stats.averageSpeed = (m_stats.averageSpeed * (m_stats.timeElapsed - deltaTime) + speedKmh * deltaTime) / m_stats.timeElapsed;
     }
     
-    m_stats.currentScore += baseScore * multiplier;
+    // Update highscore (în km parcurși)
+    float currentKm = getDistanceKm() + (m_lapCount * m_road.getLength() / 1000.0f);
+    if (currentKm > m_stats.highscoreKm) {
+        m_stats.highscoreKm = currentKm;
+    }
 }
 
 void GameplayManager::updateDifficultyProgression() {
@@ -366,7 +502,7 @@ void GameplayManager::checkCheckpoints() {
         m_stats.checkpointsReached++;
         m_lastCheckpointZ = effectiveDistance;
         
-        float bonus = 1000.0f * m_difficulty.level;
+        float bonus = 1000.0f * m_difficulty.level * m_difficultySettings.bonusMultiplier;
         m_stats.currentScore += bonus;
     }
 }
@@ -388,7 +524,7 @@ void GameplayManager::evaluateCornerPerformance() {
         
         if (exitSpeed >= m_cornerEntrySpeed * 0.9f && !m_player.isSpinning()) {
             m_stats.perfectCornersCount++;
-            float bonus = 500.0f * m_difficulty.level;
+            float bonus = 500.0f * m_difficulty.level * m_difficultySettings.bonusMultiplier;
             m_stats.currentScore += bonus;
         }
     }
@@ -412,4 +548,92 @@ float GameplayManager::getDistance() const {
 
 GameMode GameplayManager::getGameMode() const {
     return m_mode;
+}
+
+// Adaugă funcțiile pentru Campaign:
+
+void GameplayManager::setCampaignTrack(const CampaignTrack& track) {
+    m_campaignTrack = track;
+    m_campaignProgress.reset();
+    m_campaignProgress.totalLaps = track.requiredLaps;
+    m_objectiveCompleted = false;
+    m_raceFinished = false;
+    
+    // Afișează task-ul selectat, dacă există
+    const CampaignTask* selectedTask = track.getSelectedTask();
+    if (selectedTask) {
+        std::cout << "[CAMPAIGN] Track: " << track.name 
+                  << " | Task: " << selectedTask->description << std::endl;
+    } else {
+        std::cout << "[CAMPAIGN] Track: " << track.name 
+                  << " | No task selected" << std::endl;
+    }
+}
+
+void GameplayManager::updateCampaignProgress(float deltaTime) {
+    if (m_raceFinished) return;
+    
+    m_campaignProgress.raceTime += deltaTime;
+    
+    // Track top speed
+    float speedKmh = getPlayerSpeedKmh();
+    if (speedKmh > m_campaignProgress.topSpeed) {
+        m_campaignProgress.topSpeed = speedKmh;
+    }
+    
+    // Track spinouts
+    if (m_player.isSpinning()) {
+        static bool wasSpinning = false;
+        if (!wasSpinning) {
+            m_campaignProgress.spinoutCount++;
+            m_campaignProgress.currentLapPerfect = false;
+            std::cout << "[CAMPAIGN] Spinout! Count: " << m_campaignProgress.spinoutCount << std::endl;
+        }
+        wasSpinning = true;
+    } else {
+        static bool wasSpinning = false;
+        wasSpinning = false;
+    }
+    
+    // Track off-track
+    WheelSurfaces surfaces = getWheelSurfaces();
+    bool anyWheelOffTrack = (surfaces.frontLeft == SurfaceType::OffTrack ||
+                             surfaces.frontRight == SurfaceType::OffTrack ||
+                             surfaces.rearLeft == SurfaceType::OffTrack ||
+                             surfaces.rearRight == SurfaceType::OffTrack);
+    
+    if (anyWheelOffTrack) {
+        static bool wasOffTrack = false;
+        if (!wasOffTrack) {
+            m_campaignProgress.offTrackCount++;
+            m_campaignProgress.currentLapPerfect = false;
+            std::cout << "[CAMPAIGN] Off track! Count: " << m_campaignProgress.offTrackCount << std::endl;
+        }
+        wasOffTrack = true;
+    } else {
+        static bool wasOffTrack = false;
+        wasOffTrack = false;
+    }
+    
+    // Check objective în timp real
+    checkCampaignObjective();
+}
+
+void GameplayManager::checkCampaignObjective() {
+    const CampaignTask* selectedTask = m_campaignTrack.getSelectedTask();
+    
+    if (selectedTask && m_campaignProgress.checkTask(*selectedTask)) {
+        if (!m_objectiveCompleted) {
+            m_objectiveCompleted = true;
+            std::cout << "[CAMPAIGN] TASK COMPLETED!" << std::endl;
+        }
+    }
+    
+    // Race finished când completăm toate turele
+    if (m_campaignProgress.currentLap >= m_campaignProgress.totalLaps) {
+        if (!m_raceFinished) {
+            m_raceFinished = true;
+            std::cout << "[CAMPAIGN] RACE FINISHED!" << std::endl;
+        }
+    }
 }
