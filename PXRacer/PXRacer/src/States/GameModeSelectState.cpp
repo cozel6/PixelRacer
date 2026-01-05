@@ -1,228 +1,464 @@
-﻿
-#include "GameModeSelectState.h"
+﻿#include "GameModeSelectState.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/PlayState.h"
 #include "States/TrackSelectState.h"
 #include "States/StateManager.h"
 #include <iostream>
+#include <cmath>
 
 GameModeSelectState::GameModeSelectState(Game* game)
-    : State(game) {
-
-    //Load font
+    : State(game)
+    , m_selectedIndex(0)
+    , m_transitionTimer(0.0f)
+    , m_bgAnimTimer(0.0f)
+{
     if (!m_font.openFromFile("assets/fonts/PressStart2P-Regular.ttf")) {
-        std::cerr << "Failed to load in GameModeSelectState" << std::endl;
+        std::cerr << "[GameModeSelect] Failed to load font!" << std::endl;
     }
 
-    initializeGameModes();
+    initializeCards();
 }
 
-void GameModeSelectState::initializeGameModes() {
+void GameModeSelectState::initializeCards() {
+    // Header
+    m_headerText = std::make_unique<sf::Text>(m_font);
+    m_headerText->setString("SELECT GAME MODE");
+    m_headerText->setCharacterSize(32);
+    m_headerText->setFillColor(sf::Color::White);
+    m_headerText->setStyle(sf::Text::Bold);
+    auto headerBounds = m_headerText->getLocalBounds();
+    m_headerText->setOrigin(sf::Vector2f(
+        headerBounds.position.x + headerBounds.size.x * 0.5f,
+        headerBounds.position.y + headerBounds.size.y * 0.5f
+    ));
+    m_headerText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, 60.0f));
+    
+    // Hint text
+    m_hintText = std::make_unique<sf::Text>(m_font);
+    m_hintText->setString("Use ARROWS or MOUSE to select - ENTER to confirm - ESC to go back");
+    m_hintText->setCharacterSize(12);
+    m_hintText->setFillColor(sf::Color(150, 150, 150));
+    auto hintBounds = m_hintText->getLocalBounds();
+    m_hintText->setOrigin(sf::Vector2f(
+        hintBounds.position.x + hintBounds.size.x * 0.5f,
+        hintBounds.position.y + hintBounds.size.y * 0.5f
+    ));
+    m_hintText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT - 40.0f));
 
-    float sectionWidth = Config::WINDOW_WIDTH;
-    float sectionHeight = Config::WINDOW_HEIGHT / 3.0f;
+    // Card dimensions
+    const float cardWidth = 350.0f;
+    const float cardHeight = 400.0f;
+    const float cardSpacing = 40.0f;
+    const float totalWidth = 3 * cardWidth + 2 * cardSpacing;
+    const float startX = (Config::WINDOW_WIDTH - totalWidth) * 0.5f;
+    const float cardY = (Config::WINDOW_HEIGHT - cardHeight) * 0.5f + 20.0f;
 
-    //Section 1: ENDLESS MODE
-    GameModeSection endless;
+    // ═══════════════════════════════════════════════════════════════
+    // CARD 1: ENDLESS MODE
+    // ═══════════════════════════════════════════════════════════════
+    GameModeCard endless;
+    endless.name = "ENDLESS";
+    endless.description = "Drive as far as you can!\nAvoid traffic and\nset new records.";
+    endless.iconSymbol = "8";  // Infinity-like
+    endless.primaryColor = sf::Color(41, 98, 255);      // Blue
+    endless.accentColor = sf::Color(0, 176, 255);       // Light blue
+    endless.targetScale = 1.0f;
+    endless.currentScale = 1.0f;
+    endless.hoverGlow = 0.0f;
+    endless.isSelected = true;
 
-    endless.name = "ENDLESS DRIVE";
-    endless.description = "Set new distance records without damaging your car!";
-    endless.sectionX = 0.0f;
-    endless.sectionY = 0.0f;
-    endless.sectionWidth = sectionWidth;
-    endless.sectionHeight = sectionHeight;
-    endless.isHovered = false;
-
+    float cardX = startX;
+    
+    // Card background
+    endless.cardShape = std::make_unique<sf::RectangleShape>(sf::Vector2f(cardWidth, cardHeight));
+    endless.cardShape->setPosition(sf::Vector2f(cardX, cardY));
+    endless.cardShape->setFillColor(sf::Color(25, 25, 35, 240));
+    endless.cardShape->setOutlineThickness(3.0f);
+    endless.cardShape->setOutlineColor(endless.primaryColor);
+    
+    // Icon background circle
+    endless.iconBg = std::make_unique<sf::RectangleShape>(sf::Vector2f(80.0f, 80.0f));
+    endless.iconBg->setOrigin(sf::Vector2f(40.0f, 40.0f));
+    endless.iconBg->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    endless.iconBg->setFillColor(endless.primaryColor);
+    
+    // Icon text
+    endless.iconText = std::make_unique<sf::Text>(m_font);
+    endless.iconText->setString(endless.iconSymbol);
+    endless.iconText->setCharacterSize(48);
+    endless.iconText->setFillColor(sf::Color::White);
+    endless.iconText->setStyle(sf::Text::Bold);
+    auto iconBounds = endless.iconText->getLocalBounds();
+    endless.iconText->setOrigin(sf::Vector2f(
+        iconBounds.position.x + iconBounds.size.x * 0.5f,
+        iconBounds.position.y + iconBounds.size.y * 0.5f
+    ));
+    endless.iconText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    
+    // Title
     endless.titleText = std::make_unique<sf::Text>(m_font);
     endless.titleText->setString(endless.name);
-    endless.titleText->setCharacterSize(36);
+    endless.titleText->setCharacterSize(24);
     endless.titleText->setFillColor(sf::Color::White);
-    endless.titleText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 230.0f,
-        sectionHeight * 0.45f
+    endless.titleText->setStyle(sf::Text::Bold);
+    auto titleBounds = endless.titleText->getLocalBounds();
+    endless.titleText->setOrigin(sf::Vector2f(
+        titleBounds.position.x + titleBounds.size.x * 0.5f,
+        titleBounds.position.y + titleBounds.size.y * 0.5f
     ));
-
+    endless.titleText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 170.0f));
+    
+    // Description
     endless.descText = std::make_unique<sf::Text>(m_font);
     endless.descText->setString(endless.description);
-    endless.descText->setCharacterSize(20);
-    endless.descText->setFillColor(sf::Color(200, 200, 200));
-    endless.descText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 530.0f,
-        sectionHeight * 0.65f
+    endless.descText->setCharacterSize(14);
+    endless.descText->setFillColor(sf::Color(180, 180, 180));
+    endless.descText->setLineSpacing(1.5f);
+    auto descBounds = endless.descText->getLocalBounds();
+    endless.descText->setOrigin(sf::Vector2f(
+        descBounds.position.x + descBounds.size.x * 0.5f,
+        descBounds.position.y
     ));
+    endless.descText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 220.0f));
 
-    m_gameModes.push_back(std::move(endless));
+    m_cards.push_back(std::move(endless));
 
-    //Section 2: CAMPAIGN MODE
-    GameModeSection campaign;
+    // ═══════════════════════════════════════════════════════════════
+    // CARD 2: CAMPAIGN MODE
+    // ═══════════════════════════════════════════════════════════════
+    GameModeCard campaign;
     campaign.name = "CAMPAIGN";
-    campaign.description = "Complete challenging levels\nUnlock new cars and tracks!";
-    campaign.sectionX = 0.0f;
-    campaign.sectionY = sectionHeight;
-    campaign.sectionWidth = sectionWidth;
-    campaign.sectionHeight = sectionHeight;
-    campaign.isHovered = false;
+    campaign.description = "Race through levels!\nComplete challenges\nand unlock rewards.";
+    campaign.iconSymbol = "!";  // Trophy-like
+    campaign.primaryColor = sf::Color(255, 152, 0);     // Orange
+    campaign.accentColor = sf::Color(255, 193, 7);      // Yellow
+    campaign.targetScale = 1.0f;
+    campaign.currentScale = 1.0f;
+    campaign.hoverGlow = 0.0f;
+    campaign.isSelected = false;
 
+    cardX = startX + cardWidth + cardSpacing;
+    
+    campaign.cardShape = std::make_unique<sf::RectangleShape>(sf::Vector2f(cardWidth, cardHeight));
+    campaign.cardShape->setPosition(sf::Vector2f(cardX, cardY));
+    campaign.cardShape->setFillColor(sf::Color(25, 25, 35, 240));
+    campaign.cardShape->setOutlineThickness(3.0f);
+    campaign.cardShape->setOutlineColor(sf::Color(60, 60, 70));
+    
+    campaign.iconBg = std::make_unique<sf::RectangleShape>(sf::Vector2f(80.0f, 80.0f));
+    campaign.iconBg->setOrigin(sf::Vector2f(40.0f, 40.0f));
+    campaign.iconBg->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    campaign.iconBg->setFillColor(campaign.primaryColor);
+    
+    campaign.iconText = std::make_unique<sf::Text>(m_font);
+    campaign.iconText->setString(campaign.iconSymbol);
+    campaign.iconText->setCharacterSize(48);
+    campaign.iconText->setFillColor(sf::Color::White);
+    campaign.iconText->setStyle(sf::Text::Bold);
+    iconBounds = campaign.iconText->getLocalBounds();
+    campaign.iconText->setOrigin(sf::Vector2f(
+        iconBounds.position.x + iconBounds.size.x * 0.5f,
+        iconBounds.position.y + iconBounds.size.y * 0.5f
+    ));
+    campaign.iconText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    
     campaign.titleText = std::make_unique<sf::Text>(m_font);
     campaign.titleText->setString(campaign.name);
-    campaign.titleText->setCharacterSize(36);
+    campaign.titleText->setCharacterSize(24);
     campaign.titleText->setFillColor(sf::Color::White);
-    campaign.titleText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 140.0f,
-        sectionHeight * 1.3f
+    campaign.titleText->setStyle(sf::Text::Bold);
+    titleBounds = campaign.titleText->getLocalBounds();
+    campaign.titleText->setOrigin(sf::Vector2f(
+        titleBounds.position.x + titleBounds.size.x * 0.5f,
+        titleBounds.position.y + titleBounds.size.y * 0.5f
     ));
-
+    campaign.titleText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 170.0f));
+    
     campaign.descText = std::make_unique<sf::Text>(m_font);
     campaign.descText->setString(campaign.description);
-    campaign.descText->setCharacterSize(20);
-    campaign.descText->setFillColor(sf::Color(200, 200, 200));
-    campaign.descText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 270.0f,
-        sectionHeight * 1.5f
+    campaign.descText->setCharacterSize(14);
+    campaign.descText->setFillColor(sf::Color(180, 180, 180));
+    campaign.descText->setLineSpacing(1.5f);
+    descBounds = campaign.descText->getLocalBounds();
+    campaign.descText->setOrigin(sf::Vector2f(
+        descBounds.position.x + descBounds.size.x * 0.5f,
+        descBounds.position.y
     ));
+    campaign.descText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 220.0f));
 
-    m_gameModes.push_back(std::move(campaign));
+    m_cards.push_back(std::move(campaign));
 
-    // Section 3: TIME TRIAL MODE
-    GameModeSection timeTrial;
+    // ═══════════════════════════════════════════════════════════════
+    // CARD 3: TIME TRIAL MODE
+    // ═══════════════════════════════════════════════════════════════
+    GameModeCard timeTrial;
     timeTrial.name = "TIME TRIAL";
-    timeTrial.description = "Race against the clock\nCompete for best times!";
-    timeTrial.sectionX = 0.0f;
-    timeTrial.sectionY = sectionHeight * 2;
-    timeTrial.sectionWidth = sectionWidth;
-    timeTrial.sectionHeight = sectionHeight;
-    timeTrial.isHovered = false;
+    timeTrial.description = "Race against time!\nSet the fastest lap\nand beat your records.";
+    timeTrial.iconSymbol = "T";  // Clock-like
+    timeTrial.primaryColor = sf::Color(76, 175, 80);    // Green
+    timeTrial.accentColor = sf::Color(139, 195, 74);    // Light green
+    timeTrial.targetScale = 1.0f;
+    timeTrial.currentScale = 1.0f;
+    timeTrial.hoverGlow = 0.0f;
+    timeTrial.isSelected = false;
 
+    cardX = startX + 2 * (cardWidth + cardSpacing);
+    
+    timeTrial.cardShape = std::make_unique<sf::RectangleShape>(sf::Vector2f(cardWidth, cardHeight));
+    timeTrial.cardShape->setPosition(sf::Vector2f(cardX, cardY));
+    timeTrial.cardShape->setFillColor(sf::Color(25, 25, 35, 240));
+    timeTrial.cardShape->setOutlineThickness(3.0f);
+    timeTrial.cardShape->setOutlineColor(sf::Color(60, 60, 70));
+    
+    timeTrial.iconBg = std::make_unique<sf::RectangleShape>(sf::Vector2f(80.0f, 80.0f));
+    timeTrial.iconBg->setOrigin(sf::Vector2f(40.0f, 40.0f));
+    timeTrial.iconBg->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    timeTrial.iconBg->setFillColor(timeTrial.primaryColor);
+    
+    timeTrial.iconText = std::make_unique<sf::Text>(m_font);
+    timeTrial.iconText->setString(timeTrial.iconSymbol);
+    timeTrial.iconText->setCharacterSize(48);
+    timeTrial.iconText->setFillColor(sf::Color::White);
+    timeTrial.iconText->setStyle(sf::Text::Bold);
+    iconBounds = timeTrial.iconText->getLocalBounds();
+    timeTrial.iconText->setOrigin(sf::Vector2f(
+        iconBounds.position.x + iconBounds.size.x * 0.5f,
+        iconBounds.position.y + iconBounds.size.y * 0.5f
+    ));
+    timeTrial.iconText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 80.0f));
+    
     timeTrial.titleText = std::make_unique<sf::Text>(m_font);
     timeTrial.titleText->setString(timeTrial.name);
-    timeTrial.titleText->setCharacterSize(36);
+    timeTrial.titleText->setCharacterSize(24);
     timeTrial.titleText->setFillColor(sf::Color::White);
-    timeTrial.titleText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 175.0f,
-        sectionHeight * 2.3f
+    timeTrial.titleText->setStyle(sf::Text::Bold);
+    titleBounds = timeTrial.titleText->getLocalBounds();
+    timeTrial.titleText->setOrigin(sf::Vector2f(
+        titleBounds.position.x + titleBounds.size.x * 0.5f,
+        titleBounds.position.y + titleBounds.size.y * 0.5f
     ));
-
+    timeTrial.titleText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 170.0f));
+    
     timeTrial.descText = std::make_unique<sf::Text>(m_font);
     timeTrial.descText->setString(timeTrial.description);
-    timeTrial.descText->setCharacterSize(20);
-    timeTrial.descText->setFillColor(sf::Color(200, 200, 200));
-    timeTrial.descText->setPosition(sf::Vector2f(
-        sectionWidth * 0.5f - 240.0f,
-        sectionHeight * 2.5f
+    timeTrial.descText->setCharacterSize(14);
+    timeTrial.descText->setFillColor(sf::Color(180, 180, 180));
+    timeTrial.descText->setLineSpacing(1.5f);
+    descBounds = timeTrial.descText->getLocalBounds();
+    timeTrial.descText->setOrigin(sf::Vector2f(
+        descBounds.position.x + descBounds.size.x * 0.5f,
+        descBounds.position.y
     ));
+    timeTrial.descText->setPosition(sf::Vector2f(cardX + cardWidth * 0.5f, cardY + 220.0f));
 
-    m_gameModes.push_back(std::move(timeTrial));
+    m_cards.push_back(std::move(timeTrial));
+    
+    updateSelection(0);
 }
 
 void GameModeSelectState::handleInput(const sf::Event& event) {
-    if (event.is<sf::Event::MouseMoved>()) {
+    if (event.is<sf::Event::KeyPressed>()) {
+        const auto* key = event.getIf<sf::Event::KeyPressed>();
+        
+        switch (key->code) {
+            case sf::Keyboard::Key::Left:
+            case sf::Keyboard::Key::A:
+                updateSelection((m_selectedIndex - 1 + 3) % 3);
+                break;
+                
+            case sf::Keyboard::Key::Right:
+            case sf::Keyboard::Key::D:
+                updateSelection((m_selectedIndex + 1) % 3);
+                break;
+                
+            case sf::Keyboard::Key::Enter:
+            case sf::Keyboard::Key::Space:
+                selectCurrentMode();
+                break;
+                
+            case sf::Keyboard::Key::Escape:
+                m_game->getStateManager()->popState();
+                break;
+                
+            default:
+                break;
+        }
+    }
+    else if (event.is<sf::Event::MouseMoved>()) {
         const auto* mouseEvent = event.getIf<sf::Event::MouseMoved>();
-        updateHover(sf::Vector2f(static_cast<float>(mouseEvent->position.x),
-            static_cast<float>(mouseEvent->position.y)));
+        sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
+                              static_cast<float>(mouseEvent->position.y));
+        
+        for (size_t i = 0; i < m_cards.size(); ++i) {
+            auto bounds = m_cards[i].cardShape->getGlobalBounds();
+            if (bounds.contains(mousePos)) {
+                if (m_selectedIndex != static_cast<int>(i)) {
+                    updateSelection(static_cast<int>(i));
+                }
+                break;
+            }
+        }
     }
     else if (event.is<sf::Event::MouseButtonPressed>()) {
         const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
         if (mouseEvent->button == sf::Mouse::Button::Left) {
             sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
-                static_cast<float>(mouseEvent->position.y));
-
-            for (size_t i = 0; i < m_gameModes.size(); ++i) {
-                if (mousePos.x >= m_gameModes[i].sectionX &&
-                    mousePos.x <= m_gameModes[i].sectionX + m_gameModes[i].sectionWidth &&
-                    mousePos.y >= m_gameModes[i].sectionY &&
-                    mousePos.y <= m_gameModes[i].sectionY + m_gameModes[i].sectionHeight) {
-                    selectGameMode(static_cast<int>(i));
+                                  static_cast<float>(mouseEvent->position.y));
+            
+            for (size_t i = 0; i < m_cards.size(); ++i) {
+                auto bounds = m_cards[i].cardShape->getGlobalBounds();
+                if (bounds.contains(mousePos)) {
+                    selectCurrentMode();
                     break;
                 }
             }
         }
     }
-    else if (event.is<sf::Event::KeyPressed>()) {
-        const auto* key = event.getIf<sf::Event::KeyPressed>();
-        if (key->code == sf::Keyboard::Key::Escape) {
-            m_game->getStateManager()->popState();
-        }
+}
+
+void GameModeSelectState::updateSelection(int newIndex) {
+    // Deselect old
+    if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_cards.size())) {
+        m_cards[m_selectedIndex].isSelected = false;
+        m_cards[m_selectedIndex].targetScale = 1.0f;
+        m_cards[m_selectedIndex].cardShape->setOutlineColor(sf::Color(60, 60, 70));
+    }
+    
+    // Select new
+    m_selectedIndex = newIndex;
+    if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_cards.size())) {
+        m_cards[m_selectedIndex].isSelected = true;
+        m_cards[m_selectedIndex].targetScale = 1.05f;
+        m_cards[m_selectedIndex].cardShape->setOutlineColor(m_cards[m_selectedIndex].primaryColor);
     }
 }
 
-void GameModeSelectState::updateHover(const sf::Vector2f& mousePos) {
-    for (auto& mode : m_gameModes) {
-        mode.isHovered = (mousePos.x >= mode.sectionX &&
-            mousePos.x <= mode.sectionX + mode.sectionWidth &&
-            mousePos.y >= mode.sectionY &&
-            mousePos.y <= mode.sectionY + mode.sectionHeight);
-
-        if (mode.isHovered) {
-            mode.titleText->setFillColor(sf::Color::Yellow);
-            mode.descText->setFillColor(sf::Color::Yellow);
-        }
-        else {
-            mode.titleText->setFillColor(sf::Color::White);
-            mode.descText->setFillColor(sf::Color(200, 200, 200));
-        }
-    }
-}
-
-void GameModeSelectState::selectGameMode(int index) {
+void GameModeSelectState::selectCurrentMode() {
     GameMode mode;
-
-    switch (index) {
-    case 0: // ENDLESS
-        std::cout << "Starting ENDLESS mode..." << std::endl;
-        mode = GameMode::Endless;
-        break;
-    case 1: // CAMPAIGN
-        std::cout << "Starting CAMPAIGN mode..." << std::endl;
-        mode = GameMode::Campaign;
-        break;
-    case 2: // TIME TRIAL
-        std::cout << "Starting TIME TRIAL mode..." << std::endl;
-        mode = GameMode::TimeTrial;
-        break;
-    default:
-        mode = GameMode::Endless;
+    
+    switch (m_selectedIndex) {
+        case 0:
+            std::cout << "[GameMode] Selected: ENDLESS" << std::endl;
+            mode = GameMode::Endless;
+            break;
+        case 1:
+            std::cout << "[GameMode] Selected: CAMPAIGN" << std::endl;
+            mode = GameMode::Campaign;
+            break;
+        case 2:
+            std::cout << "[GameMode] Selected: TIME TRIAL" << std::endl;
+            mode = GameMode::TimeTrial;
+            break;
+        default:
+            mode = GameMode::Endless;
     }
-
-    // ✅ Deschide TrackSelectState
+    
     auto trackSelectState = std::make_unique<TrackSelectState>(m_game, mode);
     m_game->getStateManager()->pushState(std::move(trackSelectState));
 }
 
-void GameModeSelectState::update(float deltaTime) {
-    // Animations can be added here later
-}
-
-void GameModeSelectState::render(sf::RenderWindow& window) {
-    // Draw each section with different background colors
-    for (size_t i = 0; i < m_gameModes.size(); ++i) {
-        sf::Color bgColor;
-        switch (i) {
-        case 0: bgColor = sf::Color(30, 30, 60); break;  // Blue
-        case 1: bgColor = sf::Color(60, 30, 30); break;  // Red
-        case 2: bgColor = sf::Color(30, 60, 30); break;  // Green
+void GameModeSelectState::updateCardAnimations(float deltaTime) {
+    for (auto& card : m_cards) {
+        // Smooth scale animation
+        float scaleDiff = card.targetScale - card.currentScale;
+        card.currentScale += scaleDiff * 8.0f * deltaTime;
+        
+        // Glow animation for selected card
+        if (card.isSelected) {
+            card.hoverGlow += deltaTime * 3.0f;
+            float glowIntensity = (std::sin(card.hoverGlow) + 1.0f) * 0.5f;
+            
+            sf::Color glowColor = card.primaryColor;
+            glowColor.r = static_cast<std::uint8_t>(std::min(255, static_cast<int>(glowColor.r) + static_cast<int>(40 * glowIntensity)));
+            glowColor.g = static_cast<std::uint8_t>(std::min(255, static_cast<int>(glowColor.g) + static_cast<int>(40 * glowIntensity)));
+            glowColor.b = static_cast<std::uint8_t>(std::min(255, static_cast<int>(glowColor.b) + static_cast<int>(40 * glowIntensity)));
+            
+            card.cardShape->setOutlineColor(glowColor);
+            card.cardShape->setOutlineThickness(4.0f);
+        } else {
+            card.hoverGlow = 0.0f;
+            card.cardShape->setOutlineThickness(2.0f);
         }
-
-        // Draw section background
-        sf::RectangleShape section(sf::Vector2f(m_gameModes[i].sectionWidth, m_gameModes[i].sectionHeight));
-        section.setPosition(sf::Vector2f(m_gameModes[i].sectionX, m_gameModes[i].sectionY));
-        section.setFillColor(bgColor);
-
-        // Add highlight if hovered
-        if (m_gameModes[i].isHovered) {
-            section.setFillColor(sf::Color(
-                std::min(bgColor.r + 30, 255),
-                std::min(bgColor.g + 30, 255),
-                std::min(bgColor.b + 30, 255)
-            ));
-        }
-
-        window.draw(section);
-        window.draw(*m_gameModes[i].titleText);
-        window.draw(*m_gameModes[i].descText);
     }
 }
 
+void GameModeSelectState::update(float deltaTime) {
+    m_bgAnimTimer += deltaTime;
+    updateCardAnimations(deltaTime);
+}
+
+void GameModeSelectState::drawBackground(sf::RenderWindow& window) {
+    // Gradient background
+    sf::RectangleShape bg(sf::Vector2f(
+        static_cast<float>(Config::WINDOW_WIDTH),
+        static_cast<float>(Config::WINDOW_HEIGHT)
+    ));
+    bg.setFillColor(sf::Color(15, 15, 25));
+    window.draw(bg);
+    
+    // Animated decorative lines
+    for (int i = 0; i < 5; ++i) {
+        float yOffset = std::sin(m_bgAnimTimer * 0.5f + i * 0.5f) * 20.0f;
+        
+        sf::RectangleShape line(sf::Vector2f(static_cast<float>(Config::WINDOW_WIDTH), 2.0f));
+        line.setPosition(sf::Vector2f(0.0f, 100.0f + i * 150.0f + yOffset));
+        line.setFillColor(sf::Color(40, 40, 60, 100));
+        window.draw(line);
+    }
+}
+
+void GameModeSelectState::drawCard(sf::RenderWindow& window, GameModeCard& card, size_t index) {
+    // Apply scale transform
+    sf::Vector2f cardCenter = card.cardShape->getPosition() + 
+                               sf::Vector2f(card.cardShape->getSize().x * 0.5f, 
+                                           card.cardShape->getSize().y * 0.5f);
+    
+    // Draw card background
+    window.draw(*card.cardShape);
+    
+    // Draw icon background
+    window.draw(*card.iconBg);
+    
+    // Draw icon
+    window.draw(*card.iconText);
+    
+    // Draw title
+    window.draw(*card.titleText);
+    
+    // Draw description
+    window.draw(*card.descText);
+    
+    // Draw selection indicator
+    if (card.isSelected) {
+        sf::RectangleShape indicator(sf::Vector2f(60.0f, 4.0f));
+        indicator.setOrigin(sf::Vector2f(30.0f, 2.0f));
+        indicator.setPosition(sf::Vector2f(
+            card.cardShape->getPosition().x + card.cardShape->getSize().x * 0.5f,
+            card.cardShape->getPosition().y + card.cardShape->getSize().y - 30.0f
+        ));
+        indicator.setFillColor(card.primaryColor);
+        window.draw(indicator);
+    }
+}
+
+void GameModeSelectState::render(sf::RenderWindow& window) {
+    drawBackground(window);
+    
+    // Draw header
+    window.draw(*m_headerText);
+    
+    // Draw cards
+    for (size_t i = 0; i < m_cards.size(); ++i) {
+        drawCard(window, m_cards[i], i);
+    }
+    
+    // Draw hint
+    window.draw(*m_hintText);
+}
+
 void GameModeSelectState::onEnter() {
-    std::cout << "Entered Game Mode Select State" << std::endl;
+    std::cout << "[GameModeSelect] Entered" << std::endl;
+    m_selectedIndex = 0;
+    updateSelection(0);
 }

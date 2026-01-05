@@ -14,27 +14,43 @@ public:
     void handleInput(const sf::Event& event) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow& window) override;
-
     void onEnter() override;
 
 private:
-    struct GameModeSection {
+    struct GameModeCard {
         std::string name;
         std::string description;
+        std::string iconSymbol;      // Simple text icon
+        sf::Color primaryColor;
+        sf::Color accentColor;
+        
         std::unique_ptr<sf::Text> titleText;
         std::unique_ptr<sf::Text> descText;
-        float sectionX;
-        float sectionY;
-        float sectionWidth;
-        float sectionHeight;
-        bool isHovered;
+        std::unique_ptr<sf::Text> iconText;
+        std::unique_ptr<sf::RectangleShape> cardShape;
+        std::unique_ptr<sf::RectangleShape> iconBg;
+        
+        float targetScale;
+        float currentScale;
+        float hoverGlow;
+        bool isSelected;
     };
 
-    std::vector<GameModeSection> m_gameModes;
+    std::vector<GameModeCard> m_cards;
     sf::Font m_font;
-    std::unique_ptr<sf::Text> m_titleText;
-
-    void initializeGameModes();
-    void updateHover(const sf::Vector2f& mousePos);
-    void selectGameMode(int index);
+    std::unique_ptr<sf::Text> m_headerText;
+    std::unique_ptr<sf::Text> m_hintText;
+    
+    int m_selectedIndex;
+    float m_transitionTimer;
+    
+    // Background animation
+    float m_bgAnimTimer;
+    
+    void initializeCards();
+    void updateSelection(int newIndex);
+    void selectCurrentMode();
+    void updateCardAnimations(float deltaTime);
+    void drawBackground(sf::RenderWindow& window);
+    void drawCard(sf::RenderWindow& window, GameModeCard& card, size_t index);
 };
