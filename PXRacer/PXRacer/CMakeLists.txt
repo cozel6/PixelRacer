@@ -7,7 +7,32 @@ project(PXRacer)
 
 # Add source to this project's executable.
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
-add_executable(PXRacer ${SOURCES}   "src/States/MainMenuState.cpp" "src/States/MainMenuState.h")
+add_executable(PXRacer ${SOURCES}
+    "src/States/MainMenuState.cpp"
+    "src/States/MainMenuState.h"
+    "src/States/PlayState.h"
+    "src/States/PlayState.cpp"
+    "src/States/SettingsState.h"
+    "src/States/SettingsState.cpp"
+    "src/States/CreditsState.h"
+    "src/States/CreditsState.cpp"
+    "src/Gameplay/Road.h"
+    "src/Gameplay/Player.h"
+    "src/Gameplay/Player.cpp"
+    "src/Gameplay/Road.cpp"
+    "src/Gameplay/GameplayManager.h"
+    "src/Gameplay/GameplayManager.cpp"
+    "src/Gameplay/TrackDefinition.cpp"
+    "src/Gameplay/GameModeConfig.h"
+    "src/States/TrackSelectState.h"
+    "src/States/TrackSelectState.cpp"
+    "src/Gameplay/TrackBuilder.h"
+    "src/Gameplay/TrackBuilder.cpp"
+    "src/Gameplay/CurveProcessor.h"
+    "src/Gameplay/CurveProcessor.cpp"
+    "src/UI/GameHUD.h"
+    "src/UI/GameHUD.cpp"
+ "src/Gameplay/ObstacleSystem.h" "src/Gameplay/ObstacleSystem.cpp" "src/States/TaskSelectState.h" "src/States/TaskSelectState.cpp")
 
 target_include_directories(PXRacer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
