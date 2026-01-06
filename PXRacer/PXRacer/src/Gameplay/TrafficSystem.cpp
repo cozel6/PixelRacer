@@ -120,8 +120,9 @@ void TrafficSystem::render(sf::RenderWindow& window, float cameraZ, float camera
         float screenX = halfWidth + (car->worldX - cameraX) * scale * windowWidth * 0.5f;
 
         // Draw the car
-        float drawW = car->width * scale * windowWidth * 0.5f;
-        float drawH = car->height * scale * windowHeight * 0.5f;
+        float drawW = car->width * scale * windowWidth * 0.5f * 1.25f; 
+        float drawH = car->height * scale * windowHeight * 0.5f * 1.25f; 
+
 
         // Cull cars that are too small or off-screen
         if (drawW < 1.0f || screenY > windowHeight) continue;
