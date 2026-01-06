@@ -54,15 +54,13 @@ void GameModeSelectState::initializeCards() {
     const float startX = (Config::WINDOW_WIDTH - totalWidth) * 0.5f;
     const float cardY = (Config::WINDOW_HEIGHT - cardHeight) * 0.5f + 20.0f;
 
-    // ═══════════════════════════════════════════════════════════════
-    // CARD 1: ENDLESS MODE
-    // ═══════════════════════════════════════════════════════════════
+    // Card 1: Endless Mode
     GameModeCard endless;
     endless.name = "ENDLESS";
     endless.description = "Drive as far as you can!\nAvoid traffic and\nset new records.";
-    endless.iconSymbol = "8";  // Infinity-like
-    endless.primaryColor = sf::Color(41, 98, 255);      // Blue
-    endless.accentColor = sf::Color(0, 176, 255);       // Light blue
+    endless.iconSymbol = "8";
+    endless.primaryColor = sf::Color(41, 98, 255);
+    endless.accentColor = sf::Color(0, 176, 255);
     endless.targetScale = 1.0f;
     endless.currentScale = 1.0f;
     endless.hoverGlow = 0.0f;
@@ -124,15 +122,13 @@ void GameModeSelectState::initializeCards() {
 
     m_cards.push_back(std::move(endless));
 
-    // ═══════════════════════════════════════════════════════════════
-    // CARD 2: CAMPAIGN MODE
-    // ═══════════════════════════════════════════════════════════════
+    // Card 2: Campaign Mode
     GameModeCard campaign;
     campaign.name = "CAMPAIGN";
     campaign.description = "Race through levels!\nComplete challenges\nand unlock rewards.";
-    campaign.iconSymbol = "!";  // Trophy-like
-    campaign.primaryColor = sf::Color(255, 152, 0);     // Orange
-    campaign.accentColor = sf::Color(255, 193, 7);      // Yellow
+    campaign.iconSymbol = "!";
+    campaign.primaryColor = sf::Color(255, 152, 0);
+    campaign.accentColor = sf::Color(255, 193, 7);
     campaign.targetScale = 1.0f;
     campaign.currentScale = 1.0f;
     campaign.hoverGlow = 0.0f;
@@ -189,15 +185,13 @@ void GameModeSelectState::initializeCards() {
 
     m_cards.push_back(std::move(campaign));
 
-    // ═══════════════════════════════════════════════════════════════
-    // CARD 3: TIME TRIAL MODE
-    // ═══════════════════════════════════════════════════════════════
+    // Card 3: Time Trial Mode
     GameModeCard timeTrial;
     timeTrial.name = "TIME TRIAL";
     timeTrial.description = "Race against time!\nSet the fastest lap\nand beat your records.";
-    timeTrial.iconSymbol = "T";  // Clock-like
-    timeTrial.primaryColor = sf::Color(76, 175, 80);    // Green
-    timeTrial.accentColor = sf::Color(139, 195, 74);    // Light green
+    timeTrial.iconSymbol = "T";
+    timeTrial.primaryColor = sf::Color(76, 175, 80);
+    timeTrial.accentColor = sf::Color(139, 195, 74);
     timeTrial.targetScale = 1.0f;
     timeTrial.currentScale = 1.0f;
     timeTrial.hoverGlow = 0.0f;
@@ -318,14 +312,14 @@ void GameModeSelectState::handleInput(const sf::Event& event) {
 }
 
 void GameModeSelectState::updateSelection(int newIndex) {
-    // Deselect old
+    // Deselect old card
     if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_cards.size())) {
         m_cards[m_selectedIndex].isSelected = false;
         m_cards[m_selectedIndex].targetScale = 1.0f;
         m_cards[m_selectedIndex].cardShape->setOutlineColor(sf::Color(60, 60, 70));
     }
     
-    // Select new
+    // Select new card
     m_selectedIndex = newIndex;
     if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_cards.size())) {
         m_cards[m_selectedIndex].isSelected = true;

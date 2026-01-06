@@ -10,7 +10,7 @@ void TrackBuilder::buildTrack(Road& road, const TrackDefinition& trackDef) {
 
     std::cout << "\n🏗️ ===== BUILDING TRACK: " << trackDef.name << " =====" << std::endl;
     
-    // Folosește initClean pentru Campaign tracks - fără gropi și pickup-uri
+    // Use initClean for Campaign tracks - without holes and pickups
     road.initClean(totalSegments);
 
     int currentIndex = 0;
@@ -54,7 +54,7 @@ void TrackBuilder::buildTrack(Road& road, const TrackDefinition& trackDef) {
 }
 
 void TrackBuilder::smoothLoopTransition(Road& road, int totalSegments) {
-    // ✅ Smooth the transition between last and first segments
+    // Smooth the transition between last and first segments
     const int TRANSITION_LENGTH = 20; // Number of segments to blend
     
     if (totalSegments < TRANSITION_LENGTH * 2) {
@@ -155,14 +155,14 @@ void TrackBuilder::applyChicane(Road& road, int startIndex, int length, float in
     const float INTENSITY_BOOST = 3.0f;
     int halfLength = length / 2;
     
-    // Prima jumătate - left
+    // First half - left
     for (int i = 0; i < halfLength; ++i) {
         float t = static_cast<float>(i) / static_cast<float>(halfLength);
         float curve = -(intensity * INTENSITY_BOOST) * std::sin(t * 3.14159f);
         road.setSegmentCurve(startIndex + i, curve);
     }
     
-    // A doua jumătate - right
+    // Second half - right
     for (int i = 0; i < (length - halfLength); ++i) {
         float t = static_cast<float>(i) / static_cast<float>(length - halfLength);
         float curve = (intensity * INTENSITY_BOOST) * std::sin(t * 3.14159f);

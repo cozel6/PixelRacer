@@ -41,9 +41,7 @@ void Player::getWheelPositions(float& flX, float& flZ,
     rrZ = m_positionZ - PlayerConfig::WHEEL_OFFSET_Z;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// ✅ DAMAGE SYSTEM
-// ═══════════════════════════════════════════════════════════════
+// Damage System
 void Player::addDamage(float damage) {
     float oldDamage = m_totalDamage;
     m_totalDamage += damage;
@@ -54,37 +52,37 @@ void Player::addDamage(float damage) {
     
     if (newThreshold > oldThreshold) {
         m_speed = std::max(0.0f, m_speed - PlayerConfig::DAMAGE_SPEED_PENALTY);
-        std::cout << "[DAMAGE] Threshold " << newThreshold << "0 DMG reached! Speed penalty applied." << std::endl;
+        std::cout << "[Damage] Threshold " << newThreshold << "0 Dmg reached! Speed penalty applied." << std::endl;
     }
     
     m_lastDamageThreshold = newThreshold;
     
     if (m_totalDamage >= PlayerConfig::MAX_DAMAGE) {
-        std::cout << "[DAMAGE] CAR DESTROYED!" << std::endl;
+        std::cout << "[Damage] Car destroyed!" << std::endl;
     }
 }
 
-// ✅ NEW: Repair damage
+// Repair damage
 void Player::repair(float amount) {
     m_totalDamage = std::max(0.0f, m_totalDamage - amount);
     m_lastDamageThreshold = static_cast<int>(m_totalDamage / PlayerConfig::DAMAGE_SPEED_PENALTY_THRESHOLD);
 }
 
 float Player::getMaxSpeedWithDamage() const {
-    // Reducem viteza maximă bazat pe damage
+    // Reduce max speed based on damage
     int damageLevel = static_cast<int>(m_totalDamage / PlayerConfig::DAMAGE_SPEED_PENALTY_THRESHOLD);
     float speedReduction = damageLevel * PlayerConfig::DAMAGE_SPEED_PENALTY;
-    return std::max(10.0f, PlayerConfig::MAX_SPEED - speedReduction);  // Minim 10 m/s (~36 km/h)
+    return std::max(10.0f, PlayerConfig::MAX_SPEED - speedReduction);  // Minimum 10 m/s (~36 km/h)
 }
 
 void Player::update(float deltaTime, const WheelSurfaces& wheelSurfaces, float roadCurve) {
-    // ✅ Dacă mașina e distrusă, nu mai răspunde la input
+    // If the car is destroyed, it no longer responds to input
     if (isDestroyed()) {
-        // Mașina se oprește încet
+        // Car slows down gradually
         m_speed *= 0.95f;
         if (m_speed < 1.0f) m_speed = 0.0f;
         
-        // Continuă să se învârtă
+        // Continues to spin
         m_rotation += 180.0f * deltaTime;
         if (m_rotation > 360.0f) m_rotation -= 360.0f;
         
@@ -160,14 +158,14 @@ void Player::applyCentrifugalForce(float deltaTime, float roadCurve) {
 void Player::applySpeedWobble(float deltaTime) {
     float speedRatio = m_speed / PlayerConfig::MAX_SPEED;
     
-    // ✅ Wobble mai puternic cu damage mare
+    // Stronger wobble with high damage
     float damageWobbleBonus = m_totalDamage / PlayerConfig::MAX_DAMAGE * 0.3f;
     float effectiveThreshold = PlayerConfig::SPEED_WOBBLE_THRESHOLD - damageWobbleBonus;
     
     if (speedRatio >= effectiveThreshold) {
         float wobbleStrength = (speedRatio - effectiveThreshold) / (1.0f - effectiveThreshold);
         
-        // Wobble mai intens cu damage
+        // More intense wobble with damage
         float damageIntensity = 1.0f + (m_totalDamage / PlayerConfig::MAX_DAMAGE);
         
         m_wobbleTimer += deltaTime * 15.0f;
@@ -185,17 +183,17 @@ void Player::handleInput(float deltaTime, float gripMultiplier, float roadCurve)
     m_isBraking = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) || 
                   sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down);
     
-    // ✅ Viteza maximă redusă de damage
+    // Max speed reduced by damage
     float maxSpeed = getMaxSpeedWithDamage();
     
-    // ACCELERATION
+    // Acceleration
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || 
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
         
         float accelMod = m_isDrifting ? 0.6f : 1.0f;
         m_speed += PlayerConfig::ACCELERATION * deltaTime * gripMultiplier * accelMod;
     }
-    // BRAKING
+    // Braking
     else if (m_isBraking) {
         float brakeEfficiency = 1.0f;
         
@@ -219,10 +217,10 @@ void Player::handleInput(float deltaTime, float gripMultiplier, float roadCurve)
         }
     }
     
-    // ✅ Clamp la viteza maximă bazată pe damage
+    // Clamp to max speed based on damage
     m_speed = std::min(m_speed, maxSpeed);
 
-    // STEERING - mai greu cu damage mare
+    // Steering - harder with high damage
     float damageSteerPenalty = 1.0f - (m_totalDamage / PlayerConfig::MAX_DAMAGE * 0.3f);
     float steerPower = PlayerConfig::STEER_SPEED * gripMultiplier * damageSteerPenalty;
     
@@ -298,7 +296,7 @@ void Player::applyPhysics(float deltaTime, const WheelSurfaces& wheelSurfaces, f
     applyCentrifugalForce(deltaTime, roadCurve);
     applySpeedWobble(deltaTime);
     
-    // ✅ Viteza maximă limitată de damage
+    // Max speed limited by damage
     float maxSpeed = getMaxSpeedWithDamage();
     m_speed = std::clamp(m_speed, -PlayerConfig::MAX_SPEED * 0.5f, maxSpeed);
     m_positionX = std::clamp(m_positionX, -PlayerConfig::MAX_LATERAL_POSITION, PlayerConfig::MAX_LATERAL_POSITION);
@@ -337,7 +335,7 @@ void Player::resetPosition() {
     m_isDrifting = false;
     m_driftAngle = 0.0f;
     m_wobbleOffset = 0.0f;
-    // ✅ NU resetăm damage-ul!
+    // Do NOT reset damage!
 }
 
 void Player::render(sf::RenderWindow& window, float screenX, float screenY, float scale) {
@@ -349,15 +347,15 @@ void Player::render(sf::RenderWindow& window, float screenX, float screenY, floa
     car.setPosition(sf::Vector2f(screenX + m_wobbleOffset, screenY));
     car.setRotation(sf::degrees(m_rotation + m_driftAngle));
     
-    // ✅ Culoare bazată pe damage
+    // Color based on damage
     if (isDestroyed()) {
-        car.setFillColor(sf::Color(50, 50, 50));  // Gri închis - distrusă
+        car.setFillColor(sf::Color(50, 50, 50));  // Dark gray - destroyed
     } else if (m_totalDamage >= 75.0f) {
-        car.setFillColor(sf::Color(100, 30, 30));  // Roșu închis - critică
+        car.setFillColor(sf::Color(100, 30, 30));  // Dark red - critical
     } else if (m_totalDamage >= 50.0f) {
-        car.setFillColor(sf::Color(180, 80, 0));   // Portocaliu - avariată
+        car.setFillColor(sf::Color(180, 80, 0));   // Orange - heavily damaged
     } else if (m_totalDamage >= 25.0f) {
-        car.setFillColor(sf::Color(200, 150, 0));  // Galben - zgâriată
+        car.setFillColor(sf::Color(200, 150, 0));  // Yellow - scratched
     } else if (m_isSpinning) {
         car.setFillColor(sf::Color::Yellow);
     } else if (m_isDrifting) {

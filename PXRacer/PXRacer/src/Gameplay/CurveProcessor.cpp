@@ -16,20 +16,20 @@ CurveProcessor::CurveData CurveProcessor::processSegmentCurves(
     
     const int trackLength = static_cast<int>(segmentCurves.size());
     
-    // ✅ FIX MAJOR: Wrap-around smooth pentru loop seamless!
-    // Calculăm accumulated curve absolute de la începutul pistei
+    // Wrap-around smoothing for seamless looping!
+    // Calculate accumulated curve absolute from track start
     float baseAccumulation = 0.0f;
     for (int i = 0; i < baseSegmentIndex % trackLength; ++i) {
         baseAccumulation += segmentCurves[i];
     }
     
-    // ✅ Acumulăm cu wrap-around pentru loop seamless
+    // Accumulate with wrap-around for seamless looping
     float runningCurve = 0.0f;
     for (int n = 0; n <= totalSamples; ++n) {
         float segmentPos = static_cast<float>(n) / SAMPLES_PER_SEGMENT;
         int segmentIdx = static_cast<int>(segmentPos);
         
-        // ✅ Wrap-around corect pentru index
+        // Correct wrap-around for index
         int absoluteIndex = (baseSegmentIndex + segmentIdx) % trackLength;
         if (absoluteIndex < 0) absoluteIndex += trackLength;
         
@@ -44,7 +44,7 @@ CurveProcessor::CurveData CurveProcessor::processSegmentCurves(
         result.accumulatedCurves[n] = runningCurve;
     }
     
-    // ✅ Calculăm camera offset pentru centering perfect
+    // Calculate camera offset for perfect centering
     float cameraHighResIndex = cameraPosition * SAMPLES_PER_SEGMENT;
     int camIdx0 = std::max(0, std::min(static_cast<int>(cameraHighResIndex), totalSamples - 1));
     int camIdx_1 = std::max(0, camIdx0 - 1);

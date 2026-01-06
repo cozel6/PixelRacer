@@ -22,7 +22,7 @@ Projection3D::ProjectedPoint Projection3D::project(
         return result;
     }
 
-    // ✅ SIMPLE PERSPECTIVE FORMULA (no RoadConfig dependency!)
+    // Simple perspective formula (no RoadConfig dependency!)
     // Scale: objects get smaller with distance
     // At relativeZ = 100, scale = 1.0 (full size)
     // At relativeZ = 1000, scale = 0.1 (10% size)

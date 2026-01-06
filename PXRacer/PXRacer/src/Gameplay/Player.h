@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 
 namespace PlayerConfig {
-    // ✅ F1 ANII '90 - VITEZE REALISTE!
+    // F1 Anni '90 - Realistic speeds!
     constexpr float MAX_SPEED = 90.0f;           // ~324 km/h
     constexpr float ACCELERATION = 30.0f;        
     constexpr float BRAKING = 50.0f;             
@@ -108,9 +108,9 @@ public:
     void setX(float x) { m_positionX = x; }
     void setSpeed(float speed) { m_speed = speed; }
     
-    // ✅ Damage system
+    // Damage system
     void addDamage(float damage);
-    void repair(float amount);  // ✅ NEW
+    void repair(float amount);  // New
     float getMaxSpeedWithDamage() const;
     
     void resetPosition();

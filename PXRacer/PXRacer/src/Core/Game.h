@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <optional>
-#include "Gameplay/GameModeConfig.h"  // Include complet pentru CampaignTrackData
+#include "Gameplay/GameModeConfig.h" 
 
 // Forward declarations
 class StateManager;

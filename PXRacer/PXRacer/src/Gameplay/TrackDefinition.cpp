@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iterator>  
 
-// Cache static pentru circuite
+// Static cache for circuits
 static std::vector<TrackDefinition> s_trackCache;
 static bool s_initialized = false;
 
@@ -18,7 +18,7 @@ void initializeTracksIfNeeded() {
     }
 }
 
-// ✅ TEST - Circuitul simplu pentru testare și învățare
+// Test - Simple oval track for testing and practice
 TrackDefinition TrackLibrary::createTestTrack() {
     TrackDefinition track("test", "Test", "Virtual", 2.5f, 3, TrackDifficulty::Easy);
     track.description = "Simple oval track for testing and practice";
@@ -27,10 +27,10 @@ TrackDefinition TrackLibrary::createTestTrack() {
     // Front Straight
     track.sections.push_back(TrackSection(SectionType::Straight, 60, 0.0f, "Front Straight"));
     
-    // Turn 1-2 cu BANKING
+    // Turn 1-2 with banking
     track.sections.push_back(TrackSection(SectionType::LeftCurve, 50, 7.0f, "Turn 1-2"));
     
-    // Back Straight cu deal pentru test
+    // Back straight with hill for test
     track.sections.push_back(TrackSection(SectionType::Hill, 40, 3.0f, "Back Hill"));
     track.sections.push_back(TrackSection(SectionType::Straight, 20, 0.0f, "Back Straight"));
     
@@ -40,7 +40,7 @@ TrackDefinition TrackLibrary::createTestTrack() {
     return track;
 }
 
-// ✅ MONACO - Curbe strânse pe străzi înguste
+// Monaco - Tight curves on narrow streets
 TrackDefinition TrackLibrary::createMonacoGP() {
     TrackDefinition track("monaco_gp", "Circuit de Monaco", "Monaco", 3.337f, 78, TrackDifficulty::Expert);
     track.description = "The jewel in F1's crown - narrow streets and glamour";
@@ -62,7 +62,7 @@ TrackDefinition TrackLibrary::createMonacoGP() {
     return track;
 }
 
-// ✅ SPA - Mix de curbe rapide și tehnice
+// Spa - Mix of fast and technical curves
 TrackDefinition TrackLibrary::createSpaFrancorchamps() {
     TrackDefinition track("spa_francorchamps", "Spa-Francorchamps", "Belgium", 7.004f, 44, TrackDifficulty::Hard);
     track.description = "The most challenging circuit - Eau Rouge awaits";
@@ -82,49 +82,49 @@ TrackDefinition TrackLibrary::createSpaFrancorchamps() {
     return track;
 }
 
-// ✅ MONZA - Temple of Speed - Layout REAL cu chicane devreme
+// Monza - Temple of Speed - Real layout with early chicanes
 TrackDefinition TrackLibrary::createMonzaGP() {
     TrackDefinition track("monza_gp", "Autodromo di Monza", "Italy", 5.793f, 53, TrackDifficulty::Medium);
     track.description = "Temple of Speed - heavy braking chicanes and long straights";
     track.year = 1922;
 
-    // Start/Finish - scurt înainte de prima chicane
+    // Start/Finish - short before first chicane
     track.sections.push_back(TrackSection(SectionType::Straight, 25, 0.0f, "Pit Straight"));
     
-    // Prima chicane - FOARTE DEVREME după start (Variante del Rettifilo / Turn 1-2)
+    // First chicane - very early after start (Variante del Rettifilo / Turn 1-2)
     track.sections.push_back(TrackSection(SectionType::Chicane, 22, 8.0f, "Variante del Rettifilo"));
     
-    // Curva Grande - curbă lungă spre DREAPTA, foarte rapidă
+    // Curva Grande - long curve to the right, very fast
     track.sections.push_back(TrackSection(SectionType::RightCurve, 45, 3.5f, "Curva Grande"));
     
-    // A doua chicane (Variante della Roggia / Turn 4-5)
+    // Second chicane (Variante della Roggia / Turn 4-5)
     track.sections.push_back(TrackSection(SectionType::Chicane, 20, 7.5f, "Variante della Roggia"));
     
-    // Lesmo 1 - curbă spre stânga, MAI DESCHISĂ
+    // Lesmo 1 - curve to the left, more open
     track.sections.push_back(TrackSection(SectionType::LeftCurve, 25, 5.0f, "Lesmo 1"));
     
-    // Scurtă dreaptă între Lesmo-uri
+    // Short straight between Lesmo turns
     track.sections.push_back(TrackSection(SectionType::Straight, 15, 0.0f, "Lesmo Straight"));
     
-    // Lesmo 2 - curbă spre stânga, MAI STRÂNSĂ
+    // Lesmo 2 - curve to the left, tighter
     track.sections.push_back(TrackSection(SectionType::LeftCurve, 22, 6.5f, "Lesmo 2"));
     
-    // Dreaptă spre Ascari
+    // Straight to Ascari
     track.sections.push_back(TrackSection(SectionType::Straight, 30, 0.0f, "Serraglio Straight"));
     
-    // Variante Ascari - chicane MAI LARGĂ (intensitate mai mică)
+    // Variante Ascari - wider chicane (lower intensity)
     track.sections.push_back(TrackSection(SectionType::Chicane, 28, 5.5f, "Variante Ascari"));
     
-    // Dreaptă lungă spre Parabolica
+    // Long straight to Parabolica
     track.sections.push_back(TrackSection(SectionType::Straight, 40, 0.0f, "Back Straight"));
     
-    // Parabolica (Curva Alboreto) - curbă lungă spre dreapta, accelerare spre finish
+    // Parabolica (Curva Alboreto) - long curve to the right, acceleration to finish
     track.sections.push_back(TrackSection(SectionType::RightCurve, 40, 4.5f, "Curva Parabolica"));
 
     return track;
 }
 
-// ✅ SILVERSTONE - Flowing high-speed
+// Silverstone - Flowing high-speed
 TrackDefinition TrackLibrary::createSilverstoneGP() {
     TrackDefinition track("silverstone_gp", "Silverstone Circuit", "United Kingdom", 5.891f, 52, TrackDifficulty::Medium);
     track.description = "Home of British motorsport - fast and flowing";
@@ -144,7 +144,7 @@ TrackDefinition TrackLibrary::createSilverstoneGP() {
     return track;
 }
 
-// ✅ NÜRBURGRING GP - Technical modern layout
+// Nurburgring GP - Technical modern layout
 TrackDefinition TrackLibrary::createNurburgringGP() {
     TrackDefinition track("nurburgring_gp", "Nurburgring GP", "Germany", 5.148f, 60, TrackDifficulty::Hard);
     track.description = "Technical challenge in the Eifel mountains";

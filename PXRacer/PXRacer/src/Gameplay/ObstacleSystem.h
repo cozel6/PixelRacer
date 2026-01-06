@@ -3,37 +3,29 @@
 #include <vector>
 #include <random>
 #include <functional>
-#include "Road.h"  // ✅ Pentru RoadConfig
+#include "Road.h"  // For RoadConfig
 
 namespace ObstacleConfig {
-    // ═══════════════════════════════════════════════════════════════
-    // 🎲 SPAWN SETTINGS
-    // ═══════════════════════════════════════════════════════════════
+    // Spawn Settings
     constexpr float MIN_SPAWN_DISTANCE = 150.0f;
     constexpr float SPAWN_AHEAD_DISTANCE = 500.0f;
     constexpr float DESPAWN_BEHIND = 50.0f;
     constexpr int MAX_OBSTACLES = 30;
     
-    // ═══════════════════════════════════════════════════════════════
-    // 🕳️ POTHOLE CONFIG
-    // ═══════════════════════════════════════════════════════════════
+    // Pothole Config
     constexpr float POTHOLE_WIDTH = 150.0f;
     constexpr float POTHOLE_HEIGHT = 100.0f;
     constexpr float POTHOLE_DAMAGE = 8.0f;
     constexpr float POTHOLE_FLAT_CHANCE = 0.15f;
     constexpr float POTHOLE_SPEED_PENALTY = 0.85f;
     
-    // ═══════════════════════════════════════════════════════════════
-    // 🛢️ OIL SLICK CONFIG
-    // ═══════════════════════════════════════════════════════════════
+    // Oil Slick Config
     constexpr float OIL_WIDTH = 250.0f;
     constexpr float OIL_HEIGHT = 180.0f;
     constexpr float OIL_SPIN_DURATION = 1.5f;
     constexpr float OIL_GRIP_MULTIPLIER = 0.1f;
     
-    // ═══════════════════════════════════════════════════════════════
-    // 🔧 FLAT TIRE SETTINGS
-    // ═══════════════════════════════════════════════════════════════
+    // Flat Tire Settings
     constexpr float FLAT_TIRE_MAX_SPEED = 5.5f;
     constexpr float FLAT_TIRE_DURATION = 8.0f;
     constexpr float FLAT_TIRE_GRIP = 0.4f;

@@ -13,7 +13,7 @@ PlayState::PlayState(Game* game, GameMode mode, const TrackDefinition* track)
     , m_pauseSelectedIndex(0)
     , m_currentMode(mode)
 {
-    // COPY the track if provided (avoid dangling pointer!)
+    // Copy the track if provided (avoid dangling pointer!)
     if (track) {
         m_savedTrack = *track;  // Make a copy
         m_gameplayManager = std::make_unique<GameplayManager>(mode, &m_savedTrack.value());
@@ -47,7 +47,7 @@ void PlayState::initPauseMenu() {
     ));
     m_pauseTitle->setPosition(sf::Vector2f(windowWidth * 0.5f, windowHeight * 0.5f - 150.f));
     
-    // Menu items - add TASKS for Campaign mode
+    // Menu items - add Tasks for Campaign mode
     std::vector<std::string> menuLabels;
     if (m_currentMode == GameMode::Campaign) {
         menuLabels = { "CONTINUE", "TASKS", "RESTART", "QUIT" };
@@ -131,7 +131,7 @@ void PlayState::initTaskOverlay() {
     
     // Hint
     m_taskHintText = std::make_unique<sf::Text>(m_pauseFont);
-    m_taskHintText->setString("Press ESC to close");
+    m_taskHintText->setString("Press Esc to close");
     m_taskHintText->setCharacterSize(12);
     m_taskHintText->setFillColor(sf::Color(120, 120, 120));
     auto hintBounds = m_taskHintText->getLocalBounds();
@@ -171,9 +171,7 @@ void PlayState::updatePauseMenuDisplay() {
 void PlayState::handleInput(const sf::Event& event) {
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         
-        // ═══════════════════════════════════════════════════════════════
-        // RACE FINISHED - Special input handling
-        // ═══════════════════════════════════════════════════════════════
+        // Race finished - Special input handling
         if (m_currentMode == GameMode::Campaign && m_gameplayManager->isRaceFinished()) {
             switch (keyPressed->code) {
                 case sf::Keyboard::Key::Enter:
@@ -196,9 +194,7 @@ void PlayState::handleInput(const sf::Event& event) {
             return;  // Don't process other input when race is finished
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // GAME OVER - Special input handling (for Endless mode)
-        // ═══════════════════════════════════════════════════════════════
+        // Game over - Special input handling (for Endless mode)
         if (m_gameplayManager->isGameOver()) {
             if (keyPressed->code == sf::Keyboard::Key::Escape) {
                 std::cout << "[PlayState] Game over - returning to main menu" << std::endl;
@@ -208,9 +204,7 @@ void PlayState::handleInput(const sf::Event& event) {
             return;  // Don't process other input when game is over
         }
         
-        // ═══════════════════════════════════════════════════════════════
-        // NORMAL GAMEPLAY - Pause menu handling
-        // ═══════════════════════════════════════════════════════════════
+        // Normal gameplay - Pause menu handling
         if (keyPressed->code == sf::Keyboard::Key::Escape) {
             if (m_showingTasks) {
                 m_showingTasks = false;  // Close task overlay
@@ -302,7 +296,7 @@ void PlayState::render(sf::RenderWindow& window) {
     m_gameplayManager->render(window);
     m_hud->render(window, *m_gameplayManager);
     
-    // Don't show pause menu if race is finished or game over (HUD handles those screens)
+    // Don't show pause menu if race is finished or game over (Hud handles those screens)
     if (m_isPaused && !m_gameplayManager->isRaceFinished() && !m_gameplayManager->isGameOver()) {
         // Dim overlay
         sf::RectangleShape overlay(sf::Vector2f(
@@ -336,14 +330,14 @@ void PlayState::onEnter() {
 void PlayState::restartGame() {
     std::cout << "[GAME] Restarting level..." << std::endl;
     
-    // SAFE RESTART - Use our saved copy of the track!
+    // Safe restart - Use our saved copy of the track!
     if (m_savedTrack.has_value()) {
         m_gameplayManager = std::make_unique<GameplayManager>(m_currentMode, &m_savedTrack.value());
     } else {
         m_gameplayManager = std::make_unique<GameplayManager>(m_currentMode, nullptr);
     }
     
-    // Reset HUD
+    // Reset Hud
     m_hud = std::make_unique<GameHUD>();
     
     // Unpause
@@ -361,6 +355,6 @@ void PlayState::update(float deltaTime) {
         m_gameplayManager->update(deltaTime);
     }
     
-    // Always update HUD (for animations)
+    // Always update Hud (for animations)
     m_hud->update(*m_gameplayManager, deltaTime);
 }

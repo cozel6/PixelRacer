@@ -25,7 +25,7 @@ private:
     sf::Color getTaskColor(int index) const;
     
     CampaignTrackData m_trackData;
-    std::optional<TrackDefinition> m_savedTrack;  // COPIE a track-ului, nu pointer!
+    std::optional<TrackDefinition> m_savedTrack; 
     int m_selectedTaskIndex;
     
     // UI Elements

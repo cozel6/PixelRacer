@@ -72,7 +72,7 @@ void ObstacleSystem::render(sf::RenderWindow& window, float cameraZ, float camer
     const float windowWidth = static_cast<float>(window.getSize().x);
     const float windowHeight = static_cast<float>(window.getSize().y);
     
-    // Sortare: departe -> aproape (pentru drawing order corect)
+    // Sort: far to near (for correct drawing order)
     std::vector<Obstacle*> sortedObs;
     for (auto& obs : m_obstacles) {
         if (obs.isActive) {
@@ -88,35 +88,31 @@ void ObstacleSystem::render(sf::RenderWindow& window, float cameraZ, float camer
     for (Obstacle* obs : sortedObs) {
         float dz = obs->worldZ - cameraZ;
         
-        // Skip dacă e în spatele camerei
+        // Skip if behind camera
         if (dz <= 1.0f) continue;
         
-        // ═══════════════════════════════════════════════════════════════
-        // PROIECȚIE - folosind aceleași constante ca Road.cpp
-        // ═══════════════════════════════════════════════════════════════
+        // Projection using the same constants as Road.cpp
         float screenYNorm = RoadConfig::CAMERA_DEPTH * RoadConfig::CAMERA_HEIGHT / dz;
         float screenY = windowHeight * 0.5f + screenYNorm * windowHeight;
         
-        // Skip dacă e deasupra orizontului sau prea jos
+        // Skip if above horizon or too low
         if (screenY < windowHeight * 0.5f || screenY > windowHeight) continue;
         
-        // Scale bazat pe distanță
+        // Scale based on distance
         float scale = RoadConfig::CAMERA_DEPTH / dz;
         
-        // Poziția X pe ecran
+        // Screen X position
         float screenX = windowWidth * 0.5f + (obs->worldX - cameraX) * scale * windowWidth * 0.5f / RoadConfig::ROAD_WIDTH * 2.0f;
         
-        // Dimensiuni scalate
+        // Scaled dimensions
         float drawW = obs->width * scale * windowWidth * 0.25f;
         float drawH = obs->height * scale * windowHeight * 0.12f;
         
-        // Limitări de mărime
+        // Size constraints
         drawW = std::clamp(drawW, 3.0f, 250.0f);
         drawH = std::clamp(drawH, 2.0f, 120.0f);
         
-        // ═══════════════════════════════════════════════════════════════
-        // RENDER
-        // ═══════════════════════════════════════════════════════════════
+        // Render
         sf::RectangleShape shape(sf::Vector2f(drawW, drawH));
         shape.setPosition(sf::Vector2f(screenX - drawW / 2.0f, screenY - drawH));
         
@@ -124,11 +120,11 @@ void ObstacleSystem::render(sf::RenderWindow& window, float cameraZ, float camer
         color.a = static_cast<std::uint8_t>(obs->alpha * (obs->wasHit ? 0.4f : 1.0f));
         shape.setFillColor(color);
         
-        // Outline pentru vizibilitate
+        // Outline for visibility
         float outlineSize = std::max(1.0f, scale * 50.0f);
         shape.setOutlineThickness(outlineSize);
         
-        // Culoare outline bazată pe tip
+        // Outline color based on type
         sf::Color outlineColor;
         switch (obs->type) {
             case ObstacleType::Pothole:
@@ -149,7 +145,7 @@ void ObstacleSystem::render(sf::RenderWindow& window, float cameraZ, float camer
         
         window.draw(shape);
         
-        // Efecte vizuale specifice fiecărui tip
+        // Visual effects specific to each type
         if (obs->type == ObstacleType::OilSlick && drawW > 10.0f) {
             // Rainbow sheen effect
             sf::RectangleShape sheen(sf::Vector2f(drawW * 0.6f, drawH * 0.3f));
@@ -181,7 +177,7 @@ void ObstacleSystem::trySpawnObstacle(float playerZ) {
     
     float spawnZ = playerZ + SPAWN_AHEAD_DISTANCE;
     
-    // Reset spawn tracker dacă player-ul a avansat
+    // Reset spawn tracker if player has advanced
     if (m_lastSpawnZ < playerZ) {
         m_lastSpawnZ = playerZ;
     }
@@ -191,7 +187,7 @@ void ObstacleSystem::trySpawnObstacle(float playerZ) {
         return;
     }
     
-    // Șansă de spawn bazată pe dificultate
+    // Spawn chance based on difficulty
     std::uniform_real_distribution<float> chanceDist(0.0f, 1.0f);
     float spawnChance = 0.5f + m_difficulty * 0.35f;  // 50-85%
     
@@ -258,7 +254,7 @@ ObstacleType ObstacleSystem::getRandomType() {
 }
 
 float ObstacleSystem::getRandomLateralPosition() {
-    // Spawn pe drum, în zona centrală pentru a fi lovite
+    // Spawn on road, in the center zone to be hit
     std::uniform_real_distribution<float> dist(-500.0f, 500.0f);
     return dist(m_rng);
 }
@@ -297,7 +293,7 @@ bool ObstacleSystem::checkCollision(const Obstacle& obs, float playerZ, float pl
 
 void ObstacleSystem::projectObstacle(Obstacle& obs, float cameraZ, float cameraX,
                                      float screenCenterX, float screenCenterY) {
-    // Nefolosită - proiecția e direct în render()
+    // Not used - projection is directly in render()
 }
 
 void ObstacleSystem::removeInactiveObstacles(float playerZ) {

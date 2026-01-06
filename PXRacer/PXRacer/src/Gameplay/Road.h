@@ -27,10 +27,10 @@ namespace RoadConfig {
     constexpr float PICKUP_BOB_SPEED = 2.5f;
     constexpr float PICKUP_BOB_AMOUNT = 20.0f;
     
-    // ✅ Dynamic pickup spawn rates based on damage
-    constexpr int PICKUPS_LOW_DAMAGE = 5;      // 0-29 DMG: 5 pickup-uri per tură
-    constexpr int PICKUPS_MED_DAMAGE = 3;      // 30-49 DMG: 3 pickup-uri per tură
-    constexpr int PICKUPS_HIGH_DAMAGE = 1;     // 50+ DMG: 1 pickup per tură
+    // Dynamic pickup spawn rates based on damage
+    constexpr int PICKUPS_LOW_DAMAGE = 5;      // 0-29 DMG: 5 pickups per turn
+    constexpr int PICKUPS_MED_DAMAGE = 3;      // 30-49 DMG: 3 pickups per turn
+    constexpr int PICKUPS_HIGH_DAMAGE = 1;     // 50+ DMG: 1 pickup per turn
 }
 
 struct Pothole {

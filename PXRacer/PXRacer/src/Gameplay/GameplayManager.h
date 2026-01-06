@@ -3,6 +3,7 @@
 #include "Road.h"
 #include "GameModeConfig.h"
 #include "TrackDefinition.h"
+#include "TrafficSystem.h"
 
 enum class CountdownPhase {
     Ready,
@@ -31,7 +32,7 @@ public:
     void update(float deltaTime);
     void render(sf::RenderWindow& window);
     
-    // COUNTDOWN SYSTEM
+    // Countdown system
     void handleStartInput(bool clutchPressed);
     bool isRaceStarted() const { return m_raceStarted; }
     bool isCountingDown() const { return !m_raceStarted && m_countdownPhase != CountdownPhase::Finished; }
@@ -65,10 +66,9 @@ public:
     float getHighscoreKm() const { return m_stats.highscoreKm; }
     int getLapsWithoutDamage() const { return m_stats.lapsWithoutDamage; }
 
-    // ═══════════════════════════════════════════════════════════════
-    // CAMPAIGN MODE - Public interface
-    // ═══════════════════════════════════════════════════════════════
-    void setCampaignTrack(const CampaignTrack& track);  // ✅ ADD THIS
+
+    // Campaign mode - Public interface
+    void setCampaignTrack(const CampaignTrack& track);  
     const CampaignProgress& getCampaignProgress() const { return m_campaignProgress; }
     const CampaignTrack& getCampaignTrack() const { return m_campaignTrack; }
     bool isObjectiveCompleted() const { return m_objectiveCompleted; }
@@ -90,9 +90,6 @@ private:
     void checkPotholeCollisions();
     void checkRepairPickups();
     
-    // ═══════════════════════════════════════════════════════════════
-    // CAMPAIGN MODE - Private members
-    // ═══════════════════════════════════════════════════════════════
     CampaignTrack m_campaignTrack;
     CampaignProgress m_campaignProgress;
     bool m_objectiveCompleted = false;
@@ -107,13 +104,16 @@ private:
     GameMode m_mode;
     Player m_player;
     Road m_road;
+
+    TrafficSystem m_traffic;
+    
     std::string m_trackName;
     
     // Endless difficulty
     EndlessDifficultyLevel m_endlessDifficulty = EndlessDifficultyLevel::Medium;
     EndlessDifficultySettings m_difficultySettings;
     
-    // COUNTDOWN STATE
+    // Countdown state
     bool m_raceStarted;
     CountdownPhase m_countdownPhase;
     float m_countdownTimer;
@@ -125,7 +125,7 @@ private:
     float m_activeBoostTimer;
     float m_currentBoostMultiplier;
     
-    // LAP TIMING
+    // Lap timing
     float m_currentLapTime;
     float m_bestLapTime;
     float m_lastLapTime;

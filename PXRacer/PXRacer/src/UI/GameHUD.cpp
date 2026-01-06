@@ -36,9 +36,7 @@ GameHUD::GameHUD() {
     float winW = static_cast<float>(Config::WINDOW_WIDTH);
     float winH = static_cast<float>(Config::WINDOW_HEIGHT);
     
-    // ═══════════════════════════════════════════════════════════════
-    // LEFT PANEL - Speed & Damage
-    // ═══════════════════════════════════════════════════════════════
+    // Left Panel - Speed & Damage
     m_leftPanel = std::make_unique<sf::RectangleShape>(
         sf::Vector2f(HUDConfig::LEFT_PANEL_WIDTH, HUDConfig::LEFT_PANEL_HEIGHT));
     m_leftPanel->setPosition(sf::Vector2f(HUDConfig::PANEL_MARGIN, HUDConfig::PANEL_MARGIN));
@@ -49,7 +47,7 @@ GameHUD::GameHUD() {
     float leftX = HUDConfig::PANEL_MARGIN + HUDConfig::PANEL_PADDING;
     float leftY = HUDConfig::PANEL_MARGIN + HUDConfig::PANEL_PADDING;
     
-    // Speed number (mare)
+    // Speed number
     m_speedText = std::make_unique<sf::Text>(m_font);
     m_speedText->setCharacterSize(32);
     m_speedText->setFillColor(HUDConfig::TEXT_WHITE);
@@ -93,9 +91,7 @@ GameHUD::GameHUD() {
     m_damageBar->setPosition(sf::Vector2f(leftX, leftY + 80.0f));
     m_damageBar->setFillColor(sf::Color(100, 255, 100));
     
-    // ═══════════════════════════════════════════════════════════════
-    // RIGHT PANEL - Score & Lap Times
-    // ═══════════════════════════════════════════════════════════════
+    // Right Panel - Score & Lap Times
     float rightPanelX = winW - HUDConfig::RIGHT_PANEL_WIDTH - HUDConfig::PANEL_MARGIN;
     
     m_rightPanel = std::make_unique<sf::RectangleShape>(
@@ -164,9 +160,7 @@ GameHUD::GameHUD() {
     m_lastLapText->setString("--:--.---");
     m_lastLapText->setPosition(sf::Vector2f(rightX + 100.0f, rightY + 98.0f));
     
-    // ═══════════════════════════════════════════════════════════════
-    // CENTER - Lap Counter
-    // ═══════════════════════════════════════════════════════════════
+    // Center - Lap Counter
     float lapPanelX = (winW - HUDConfig::LAP_PANEL_WIDTH) / 2.0f;
     
     m_lapPanel = std::make_unique<sf::RectangleShape>(
@@ -230,14 +224,14 @@ void GameHUD::updateSpeedometer(float speedKmh) {
     oss << static_cast<int>(speedKmh);
     m_speedText->setString(oss.str());
     
-    // Poziționăm KM/H după număr
+    // Position KM/H after number
     auto speedBounds = m_speedText->getGlobalBounds();
     m_speedUnitText->setPosition(sf::Vector2f(
         speedBounds.position.x + speedBounds.size.x + 8.0f,
         speedBounds.position.y + speedBounds.size.y - 14.0f
     ));
     
-    // Culoare bazată pe viteză
+    // Color based on speed
     if (speedKmh > 280.0f) {
         m_speedText->setFillColor(sf::Color(255, 80, 80));
     } else if (speedKmh > 200.0f) {
@@ -274,7 +268,7 @@ void GameHUD::updateLapInfo(float currentLap, float bestLap, float lastLap, int 
     oss << "LAP " << (lapCount + 1);
     m_lapCountText->setString(oss.str());
     
-    // Centram textul în panou
+    // Center text in panel
     float lapPanelX = m_lapPanel->getPosition().x;
     float lapPanelW = m_lapPanel->getSize().x;
     float lapPanelY = m_lapPanel->getPosition().y;
@@ -286,7 +280,7 @@ void GameHUD::updateDamage(float damage) {
     float damagePercent = std::clamp(damage / 100.0f, 0.0f, 1.0f);
     m_damageBar->setSize(sf::Vector2f(HUDConfig::BAR_WIDTH * damagePercent, HUDConfig::BAR_HEIGHT));
     
-    // Culoare: verde → galben → roșu
+    // Color: green, yellow, red
     if (damagePercent >= 0.75f) {
         m_damageBar->setFillColor(sf::Color(255, 50, 50));
         m_damageLabel->setFillColor(sf::Color(255, 100, 100));
@@ -391,7 +385,7 @@ void GameHUD::renderCountdown(sf::RenderWindow& window, const GameplayManager& g
     
     if (phase != CountdownPhase::Go && phase != CountdownPhase::Finished) {
         sf::Text hintText(m_font);
-        hintText.setString("Press SHIFT at green for boost!");
+        hintText.setString("Press Shift at green for boost!");
         hintText.setCharacterSize(12);
         hintText.setFillColor(sf::Color(150, 150, 150));
         centerText(hintText, centerX, centerY + 100.0f);
@@ -446,7 +440,7 @@ void GameHUD::renderGameOver(sf::RenderWindow& window, const GameplayManager& ga
     overlay.setFillColor(sf::Color(0, 0, 0, 200));
     window.draw(overlay);
     
-    // Panel central
+    // Central panel
     sf::RectangleShape panel(sf::Vector2f(400.0f, 250.0f));
     panel.setOrigin(sf::Vector2f(200.0f, 125.0f));
     panel.setPosition(sf::Vector2f(winW / 2.0f, winH / 2.0f));
@@ -455,7 +449,7 @@ void GameHUD::renderGameOver(sf::RenderWindow& window, const GameplayManager& ga
     panel.setOutlineThickness(3.0f);
     window.draw(panel);
     
-    // GAME OVER
+    // Game Over
     sf::Text gameOverText(m_font);
     gameOverText.setString("GAME OVER");
     gameOverText.setCharacterSize(48);
@@ -463,7 +457,7 @@ void GameHUD::renderGameOver(sf::RenderWindow& window, const GameplayManager& ga
     centerText(gameOverText, winW / 2.0f, winH / 2.0f - 70.0f);
     window.draw(gameOverText);
     
-    // CAR DESTROYED
+    // Car Destroyed
     sf::Text subtitleText(m_font);
     subtitleText.setString("CAR DESTROYED!");
     subtitleText.setCharacterSize(18);
@@ -493,7 +487,7 @@ void GameHUD::renderGameOver(sf::RenderWindow& window, const GameplayManager& ga
     
     // Instructions
     sf::Text hintText(m_font);
-    hintText.setString("Press ESC to exit");
+    hintText.setString("Press Esc to exit");
     hintText.setCharacterSize(12);
     hintText.setFillColor(sf::Color(120, 120, 120));
     centerText(hintText, winW / 2.0f, winH / 2.0f + 95.0f);
@@ -509,7 +503,7 @@ void GameHUD::renderRaceFinished(sf::RenderWindow& window, const GameplayManager
     overlay.setFillColor(sf::Color(0, 0, 0, 200));
     window.draw(overlay);
     
-    // Panel central - mai mare pentru a încăpea toate informațiile
+    // Central panel - larger to fit all information
     sf::RectangleShape panel(sf::Vector2f(500.0f, 400.0f));
     panel.setOrigin(sf::Vector2f(250.0f, 200.0f));
     panel.setPosition(sf::Vector2f(winW / 2.0f, winH / 2.0f));
@@ -522,7 +516,7 @@ void GameHUD::renderRaceFinished(sf::RenderWindow& window, const GameplayManager
     const auto& track = gameplay.getCampaignTrack();
     bool taskCompleted = gameplay.isObjectiveCompleted();
     
-    // RACE FINISHED!
+    // Race Finished
     sf::Text titleText(m_font);
     titleText.setString("RACE FINISHED!");
     titleText.setCharacterSize(36);
@@ -563,7 +557,7 @@ void GameHUD::renderRaceFinished(sf::RenderWindow& window, const GameplayManager
         window.draw(taskDesc);
     }
     
-    // Task status (COMPLETED / FAILED)
+    // Task status (Completed / Failed)
     sf::Text taskStatus(m_font);
     if (taskCompleted) {
         taskStatus.setString("COMPLETED!");
@@ -681,7 +675,7 @@ void GameHUD::renderRaceFinished(sf::RenderWindow& window, const GameplayManager
     
     // Instructions
     sf::Text hintText(m_font);
-    hintText.setString("Press ENTER to continue - ESC to exit");
+    hintText.setString("Press Enter to continue - Esc to exit");
     hintText.setCharacterSize(10);
     hintText.setFillColor(sf::Color(120, 120, 120));
     centerText(hintText, winW / 2.0f, winH / 2.0f + 175.0f);
@@ -718,12 +712,12 @@ void GameHUD::render(sf::RenderWindow& window, const GameplayManager& gameplay) 
     // Boost feedback
     renderBoostFeedback(window, gameplay);
     
-    // Game over (pentru Endless când mașina e distrusă)
+    // Game over (for Endless when the car is destroyed)
     if (gameplay.isGameOver()) {
         renderGameOver(window, gameplay);
     }
     
-    // Race finished (pentru Campaign când se termină toate turele)
+    // Race finished (for Campaign when all laps are completed)
     if (gameplay.getGameMode() == GameMode::Campaign && gameplay.isRaceFinished()) {
         renderRaceFinished(window, gameplay);
     }

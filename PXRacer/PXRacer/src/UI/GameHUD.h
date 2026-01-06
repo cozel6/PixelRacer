@@ -21,18 +21,16 @@ private:
     void renderTrafficLight(sf::RenderWindow& window, float x, float y, bool isOn, bool isGreen);
     void renderBoostFeedback(sf::RenderWindow& window, const GameplayManager& gameplay);
     void renderGameOver(sf::RenderWindow& window, const GameplayManager& gameplay);
-    void renderRaceFinished(sf::RenderWindow& window, const GameplayManager& gameplay);  // NEW!
+    void renderRaceFinished(sf::RenderWindow& window, const GameplayManager& gameplay);
     
-    // Helpers
+    // Helper functions
     std::string formatTime(float seconds);
     void centerText(sf::Text& text, float x, float y);
     void rightAlignText(sf::Text& text, float rightX, float y);
     
     sf::Font m_font;
     
-    // ═══════════════════════════════════════════════════════════════
-    // LEFT PANEL - Speed & Damage
-    // ═══════════════════════════════════════════════════════════════
+    // Left panel - Speed and Damage
     std::unique_ptr<sf::RectangleShape> m_leftPanel;
     std::unique_ptr<sf::Text> m_speedText;
     std::unique_ptr<sf::Text> m_speedUnitText;
@@ -42,9 +40,7 @@ private:
     std::unique_ptr<sf::RectangleShape> m_damageBarBg;
     std::unique_ptr<sf::RectangleShape> m_damageBar;
     
-    // ═══════════════════════════════════════════════════════════════
-    // RIGHT PANEL - Score & Lap Times
-    // ═══════════════════════════════════════════════════════════════
+    // Right panel - Score and Lap Times
     std::unique_ptr<sf::RectangleShape> m_rightPanel;
     std::unique_ptr<sf::Text> m_scoreLabel;
     std::unique_ptr<sf::Text> m_scoreText;
@@ -55,13 +51,11 @@ private:
     std::unique_ptr<sf::Text> m_lastLapLabel;
     std::unique_ptr<sf::Text> m_lastLapText;
     
-    // ═══════════════════════════════════════════════════════════════
-    // CENTER - Lap Counter
-    // ═══════════════════════════════════════════════════════════════
+    // Center - Lap Counter
     std::unique_ptr<sf::RectangleShape> m_lapPanel;
     std::unique_ptr<sf::Text> m_lapCountText;
     
-    // Animation
+    // Animation timers and state
     float m_boostFeedbackTimer = 0.0f;
     bool m_boostFeedbackShown = false;
     float m_newLapTimer = 0.0f;

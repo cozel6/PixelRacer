@@ -6,9 +6,9 @@
 #include "Core/Constants.h"
 #include <iostream>
 #include <cmath>
-#include <cstdint>  // Pentru std::uint8_t
+#include <cstdint>
 
-// Constructor - stochează o COPIE a track-ului
+// Constructor - stores a COPY of the track
 TaskSelectState::TaskSelectState(Game* game, CampaignTrackData trackData, const TrackDefinition* track)
     : State(game)
     , m_trackData(std::move(trackData))
@@ -17,7 +17,7 @@ TaskSelectState::TaskSelectState(Game* game, CampaignTrackData trackData, const 
     , m_startHovered(false)
     , m_animTimer(0.0f)
 {
-    // Salvează o COPIE a track-ului pentru a evita dangling pointer
+    // Save a COPY of the track to avoid dangling pointer
     if (track) {
         m_savedTrack = *track;
     }
@@ -280,12 +280,12 @@ void TaskSelectState::confirmSelection() {
     // Store the campaign data in game and start PlayState
     m_game->setCurrentCampaignTrack(m_trackData);
     
-    // Folosește copia salvată a track-ului
+    // Use the saved copy of the track
     if (m_savedTrack.has_value()) {
         m_game->getStateManager()->changeState(
             std::make_unique<PlayState>(m_game, GameMode::Campaign, &m_savedTrack.value()));
     } else {
-        std::cerr << "[TaskSelect] ERROR: No saved track!" << std::endl;
+        std::cerr << "[TaskSelect] Error: No saved track!" << std::endl;
         m_game->getStateManager()->changeState(
             std::make_unique<TrackSelectState>(m_game, GameMode::Campaign));
     }

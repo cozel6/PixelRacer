@@ -15,6 +15,6 @@ private:
     static void applyValley(Road& road, int startIndex, int length, float intensity);
     static void applyChicane(Road& road, int startIndex, int length, float intensity);
     
-    // ✅ NEW: Smooth the loop transition for seamless circuit
+    // Smooth the loop transition for seamless circuit
     static void smoothLoopTransition(Road& road, int totalSegments);
 };
