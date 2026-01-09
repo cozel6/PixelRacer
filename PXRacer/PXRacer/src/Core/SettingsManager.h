@@ -1,0 +1,49 @@
+#pragma once
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
+
+class SettingsManager {
+public:
+    // Using Singleton pattern
+    static SettingsManager& getInstance();
+
+    // Resolution structure
+    struct Resolution {
+        unsigned int width;
+        unsigned int height;
+        std::string name;
+    };
+
+    // Available resolutions
+    static const std::vector<Resolution> AVAILABLE_RESOLUTIONS;
+
+    // Getters
+    unsigned int getWindowWidth() const { return m_windowWidth; }
+    unsigned int getWindowHeight() const { return m_windowHeight; }
+    bool isFullscreen() const { return m_isFullscreen; }
+    int getCurrentResolutionIndex() const { return m_currentResolutionIndex; }
+
+    // Setters
+    void setResolution(int index);
+    void setFullscreen(bool fullscreen);
+
+    // Persistence (simple text file format)
+    void loadFromFile(const std::string& filename = "settings.txt");
+    void saveToFile(const std::string& filename = "settings.txt");
+
+private:
+    // Private constructor for singleton
+    SettingsManager();
+    
+    // Delete copy constructor and assignment operator
+    SettingsManager(const SettingsManager&) = delete;
+    SettingsManager& operator=(const SettingsManager&) = delete;
+
+    // Settings data
+    unsigned int m_windowWidth;
+    unsigned int m_windowHeight;
+    bool m_isFullscreen;
+    int m_currentResolutionIndex;
+};
