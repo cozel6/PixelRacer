@@ -20,6 +20,11 @@ public:
     void updateMenuDisplay();
 
 private:
+    
+    // Backround
+    std::unique_ptr<sf::Sprite> m_backgroundSprite;
+    std::unique_ptr<sf::Texture> m_backgroundTexture;
+
     // Fonts for text
     sf::Font m_font;
 

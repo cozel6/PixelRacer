@@ -3,12 +3,33 @@
 #include "../Core/Constants.h"
 #include "../States/StateManager.h"
 #include <iostream>
+#include "../UI/MenuStyle.h"
+
 
 SettingsState::SettingsState(Game *game)
     : State(game), m_selectedIndex(0), m_blinkTimer(0.0f), m_showSelector(true)
 {
+    // Load background
+    m_backgroundTexture = std::make_unique<sf::Texture>();
+    
+    // Load background texture
+    if (m_backgroundTexture->loadFromFile(MenuStyle::MENU_BACKGROUND_PATH)){
+        // Create background sprite
+        m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
+
+        // Optionally, scale background to fit window
+        auto textureSize = m_backgroundTexture->getSize();
+        float scaleX = static_cast<float>(Config::WINDOW_WIDTH) / textureSize.x;
+        float scaleY = static_cast<float>(Config::WINDOW_HEIGHT) / textureSize.y;
+        m_backgroundSprite->setScale(sf::Vector2f(scaleX,scaleY));
+    }
+    else{
+         std::cerr << "Failed to load background texture!" << std::endl;
+         m_backgroundTexture.reset();
+    }
+
     // Load font
-    if (!m_font.openFromFile("assets/fonts/LiberationMono-Regular.ttf"))
+    if (!m_font.openFromFile(MenuStyle::MENU_FONT_PATH))
     {
         std::cerr << "Failed to load font!" << std::endl;
     }
@@ -24,21 +45,25 @@ SettingsState::SettingsState(Game *game)
     // Create title text
     m_titleText = std::make_unique<sf::Text>(m_font);
     m_titleText->setString("SETTINGS");
-    m_titleText->setCharacterSize(60);
-    m_titleText->setFillColor(Config::ACCENT_COLOR);
+    m_titleText->setCharacterSize(MenuStyle::getTitleSize());
+    m_titleText->setFillColor(MenuStyle::TITLE_COLOR);
     m_titleText->setStyle(sf::Text::Style::Bold);
+
 
     // Create option texts (positioned like MainMenuState)
     for (size_t i = 0; i < m_menuOptions.size(); ++i)
     {
         auto text = std::make_unique<sf::Text>(m_font);
-        text->setString(m_menuOptions[i]);
-        text->setCharacterSize(32);
-        text->setFillColor(Config::TEXT_COLOR);
+        text->setCharacterSize(MenuStyle::getMenuItemSize());
+        text->setFillColor(MenuStyle::MENU_ITEM_COLOR);
+
+        sf::FloatRect bounds = text->getLocalBounds();
+        text->setOrigin(sf::Vector2f(bounds.size.x / 2.0f, bounds.size.y / 2.0f));
         text->setPosition(sf::Vector2f(
-            Config::WINDOW_WIDTH * 0.5f - 80.0f,
-            Config::WINDOW_HEIGHT * 0.5f + i * 50.0f
+            MenuStyle::getMenuItemXPosition(),
+            MenuStyle::getMenuItemYStart() + i * MenuStyle::getMenuItemSpacing()
         ));
+
         m_menuTexts.push_back(std::move(text));
     }
     updateMenuDisplay();
@@ -119,7 +144,7 @@ void SettingsState::update(float deltaTime)
 {
     // Update timer for selector animation
     m_blinkTimer += deltaTime;
-    if (m_blinkTimer >= 0.3f)
+    if (m_blinkTimer >= MenuStyle::BLINK_INTERVAL)
     {
         m_showSelector = !m_showSelector;
         m_blinkTimer = 0.0f;
@@ -129,15 +154,16 @@ void SettingsState::update(float deltaTime)
 
 void SettingsState::render(sf::RenderWindow &window)
 {
-    // Draw background
-    window.clear(Config::BACKGROUND_COLOR);
+    // Draw background image
+    if(m_backgroundSprite) {
+        window.draw(*m_backgroundSprite);
+    }
 
-    // Position and draw title
     sf::FloatRect titleBounds = m_titleText->getLocalBounds();
     m_titleText->setOrigin(sf::Vector2f(titleBounds.size.x / 2.0f, titleBounds.size.y / 2.0f));
     m_titleText->setPosition(sf::Vector2f(
-        Config::WINDOW_WIDTH / 2.0f,
-        Config::WINDOW_HEIGHT * 0.2f));
+    MenuStyle::getTitleXPosition(),
+    MenuStyle::getTitleYPosition()));
     window.draw(*m_titleText);
 
     // Draw menu options (positioned in constructor, just draw here)
@@ -150,25 +176,23 @@ void SettingsState::updateMenuDisplay()
 {
     for (size_t i = 0; i < m_menuTexts.size(); ++i)
     {
+        // Get the base text (without selector)
+        std::string baseText = m_menuOptions[i];
+        
         if (i == m_selectedIndex && m_showSelector)
         {
-            m_menuTexts[i]->setFillColor(Config::ACCENT_COLOR);
-            // Add selection ">"
-            std::string currentText = m_menuTexts[i]->getString();
-            if (currentText.substr(0, 2) != "> ")
-            {
-                m_menuTexts[i]->setString("> " + currentText);
-            }
+            // Selected item - add selector and use accent color
+            m_menuTexts[i]->setFillColor(MenuStyle::MENU_ITEM_SELECTED_COLOR);
+            m_menuTexts[i]->setString(MenuStyle::SELECTION_PREFIX + baseText);
         }
         else
         {
-            m_menuTexts[i]->setFillColor(Config::TEXT_COLOR);
-            // Remove selection ">"
-            std::string currentText = m_menuTexts[i]->getString();
-            if (currentText.substr(0, 2) == "> ")
-            {
-                m_menuTexts[i]->setString(currentText.substr(2));
-            }
+            // Not selected - no selector, normal color
+            m_menuTexts[i]->setFillColor(MenuStyle::MENU_ITEM_COLOR);
+            m_menuTexts[i]->setString(baseText);
         }
+        
+        sf::FloatRect bounds = m_menuTexts[i]->getLocalBounds();
+        m_menuTexts[i]->setOrigin(sf::Vector2(bounds.size.x / 2.0f, bounds.size.y / 2.0f));
     }
 }
