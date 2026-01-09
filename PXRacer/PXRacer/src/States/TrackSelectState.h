@@ -4,7 +4,7 @@
 #include "Gameplay/GameplayManager.h"
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include <memory>  // ✅ Pentru std::unique_ptr
+#include <memory>
 
 class TrackSelectState : public State {
 public:
@@ -15,32 +15,62 @@ public:
     void render(sf::RenderWindow& window) override;
 
 private:
-    GameMode m_gameMode;
-    std::vector<TrackDefinition> m_availableTracks;
-    int m_selectedIndex;
-
-    // UI Elements
-    sf::Font m_font;
-    std::unique_ptr<sf::Text> m_titleText;      // ✅ Folosim unique_ptr
-    std::unique_ptr<sf::Text> m_trackInfoText;  // ✅ Folosim unique_ptr
-    sf::RectangleShape m_infoPanel;
-
-    struct SimpleButton {
-        sf::RectangleShape shape;
-        std::string label;
-        bool isHovered;
-
-        SimpleButton() : isHovered(false) {}
+    // Track card structure
+    struct TrackCard {
+        const TrackDefinition* track;
+        std::unique_ptr<sf::RectangleShape> cardBg;
+        std::unique_ptr<sf::RectangleShape> previewBg;
+        std::unique_ptr<sf::Text> nameText;
+        std::unique_ptr<sf::Text> countryText;
+        std::unique_ptr<sf::Text> lengthText;
+        std::unique_ptr<sf::Text> difficultyText;
+        std::unique_ptr<sf::RectangleShape> difficultyBadge;
+        sf::Color difficultyColor;
+        bool isSelected;
+        float hoverGlow;
     };
 
-    std::vector<SimpleButton> m_trackButtons;
-    SimpleButton m_backButton;
-    SimpleButton m_confirmButton;
-
+    GameMode m_gameMode;
+    std::vector<TrackDefinition> m_availableTracks;
+    std::vector<TrackCard> m_trackCards;
+    int m_selectedIndex;
+    int m_scrollOffset;
+    
+    // UI Elements
+    sf::Font m_font;
+    std::unique_ptr<sf::Text> m_headerText;
+    std::unique_ptr<sf::Text> m_modeText;
+    std::unique_ptr<sf::Text> m_hintText;
+    
+    // Detail panel (right side)
+    std::unique_ptr<sf::RectangleShape> m_detailPanel;
+    std::unique_ptr<sf::Text> m_detailName;
+    std::unique_ptr<sf::Text> m_detailCountry;
+    std::unique_ptr<sf::Text> m_detailLength;
+    std::unique_ptr<sf::Text> m_detailLaps;
+    std::unique_ptr<sf::Text> m_detailDifficulty;
+    std::unique_ptr<sf::Text> m_detailDescription;
+    std::unique_ptr<sf::RectangleShape> m_trackPreview;
+    
+    // Buttons
+    std::unique_ptr<sf::RectangleShape> m_backButton;
+    std::unique_ptr<sf::Text> m_backText;
+    std::unique_ptr<sf::RectangleShape> m_startButton;
+    std::unique_ptr<sf::Text> m_startText;
+    bool m_backHovered;
+    bool m_startHovered;
+    
+    // Animation
+    float m_animTimer;
+    
+    // Methods
     void loadTracksForMode();
     void createUI();
-    void selectTrack(int index);
+    void createTrackCards();
+    void updateSelection(int newIndex);
+    void updateDetailPanel();
     void confirmSelection();
-    void displayTrackInfo(const TrackDefinition& track);
-    void updateButtonStates(const sf::Vector2f& mousePos);
+    sf::Color getDifficultyColor(TrackDifficulty diff);
+    std::string getDifficultyString(TrackDifficulty diff);
+    std::string getModeString();
 };

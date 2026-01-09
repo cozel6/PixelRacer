@@ -32,7 +32,7 @@ add_executable(PXRacer ${SOURCES}
     "src/Gameplay/CurveProcessor.cpp"
     "src/UI/GameHUD.h"
     "src/UI/GameHUD.cpp"
-)
+ "src/Gameplay/ObstacleSystem.h" "src/Gameplay/ObstacleSystem.cpp" "src/States/TaskSelectState.h" "src/States/TaskSelectState.cpp")
 
 target_include_directories(PXRacer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src

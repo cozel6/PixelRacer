@@ -25,7 +25,7 @@ struct TrackSection {
     }
 };
 
-// ✨ Dificultate circuit (pentru Campaign)
+// Track difficulty level (for Campaign)
 enum class TrackDifficulty {
     Easy,
     Medium,
@@ -34,7 +34,7 @@ enum class TrackDifficulty {
 };
 
 struct TrackDefinition {
-    std::string id;                     // Identificator unic (ex: "monaco_gp")
+    std::string id;                     // Unique identifier (e.g: "monaco_gp")
     std::string name;
     std::string country;
     float lengthKm;
@@ -45,11 +45,11 @@ struct TrackDefinition {
 
     std::vector<TrackSection> sections;
 
-    // ✨ Metadata pentru diferite moduri
+    // Metadata for different game modes
     struct Records {
-        float bestLapTime;      // Pentru Time Trial
-        float longestDistance;  // Pentru Endless
-        bool completed;         // Pentru Campaign
+        float bestLapTime;      // For Time Trial
+        float longestDistance;  // For Endless
+        bool completed;         // For Campaign
     } records;
 
     TrackDefinition(const std::string& trackId, const std::string& n,
@@ -64,7 +64,7 @@ struct TrackDefinition {
 
 class TrackLibrary {
 public:
-    // Toate circuitele
+    // All available tracks
     static TrackDefinition createTestTrack();
     static TrackDefinition createMonacoGP();
     static TrackDefinition createSpaFrancorchamps();
@@ -72,7 +72,7 @@ public:
     static TrackDefinition createSilverstoneGP();
     static TrackDefinition createNurburgringGP();
 
-    // Utilitare
+    // Utility functions
     static std::vector<TrackDefinition> getAllTracks();
     static std::vector<TrackDefinition> getTracksByDifficulty(TrackDifficulty diff);
     static TrackDefinition* getTrackById(const std::string& id);

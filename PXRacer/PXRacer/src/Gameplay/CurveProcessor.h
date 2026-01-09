@@ -1,18 +1,16 @@
 ﻿#pragma once
 #include <vector>
 
-// ============================================================================
-// CurveProcessor - Responsabil pentru matematica și acumularea curbelor
-// ============================================================================
+// CurveProcessor - Responsible for curve mathematics and accumulation
 class CurveProcessor {
 public:
     struct CurveData {
-        std::vector<float> accumulatedCurves;  // Curbe acumulate high-res
-        float cameraOffset;                     // Offset pentru camera centering
-        int baseSamples;                        // Număr de sample-uri
+        std::vector<float> accumulatedCurves;  // Accumulated high-res curves
+        float cameraOffset;                     // Offset for camera centering
+        int baseSamples;                        // Number of samples
     };
 
-    // Calculează curbe acumulate cu Catmull-Rom interpolation
+    // Calculates accumulated curves with Catmull-Rom interpolation
     static CurveData processSegmentCurves(
         const std::vector<float>& segmentCurves,
         int baseSegmentIndex,
@@ -20,10 +18,10 @@ public:
         float cameraPosition
     );
 
-    // ✅ MUTATĂ ÎN PUBLIC - necesară pentru Road.cpp
+    
     static float catmullRomInterpolate(float p0, float p1, float p2, float p3, float t);
 
 private:
-    // High-resolution sampling pentru smooth curves
+    // High-resolution sampling for smooth curves
     static constexpr int SAMPLES_PER_SEGMENT = 4;
 };

@@ -1,6 +1,8 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <memory>
+#include <optional>
+#include "Gameplay/GameModeConfig.h" 
 
 // Forward declarations
 class StateManager;
@@ -23,6 +25,14 @@ public:
     //StateManager
     StateManager* getStateManager() { return m_stateManager.get(); }
 
+    void setCurrentCampaignTrack(const CampaignTrackData& track) {
+        m_currentCampaignTrack = track;
+    }
+    
+    std::optional<CampaignTrackData> getCurrentCampaignTrack() const {
+        return m_currentCampaignTrack;
+    }
+
 private:
     void processEvents();
     void update(float deltaTime);
@@ -38,4 +48,6 @@ private:
 
     // State
     bool m_isRunning;
+
+    std::optional<CampaignTrackData> m_currentCampaignTrack;
 };
