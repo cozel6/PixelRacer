@@ -6,6 +6,7 @@
 #include "States/SettingsState.h"
 #include "States/CreditsState.h"
 #include "../UI/MenuStyle.h"
+#include "Core/SettingsManager.h"
 #include <iostream>
 
 MainMenuState::MainMenuState(Game* game)
@@ -23,8 +24,9 @@ MainMenuState::MainMenuState(Game* game)
         m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
 
         auto textureSize = m_backgroundTexture->getSize();
-        float scaleX = static_cast<float>(Config::WINDOW_WIDTH) / textureSize.x;
-        float scaleY = static_cast<float>(Config::WINDOW_HEIGHT) / textureSize.y;
+        auto& settings = SettingsManager::getInstance();
+        float scaleX = static_cast<float>(settings.getWindowWidth()) / textureSize.x;
+        float scaleY = static_cast<float>(settings.getWindowHeight()) / textureSize.y;
         m_backgroundSprite->setScale(sf::Vector2f(scaleX, scaleY));
     }
     else {

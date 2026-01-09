@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../UI/MenuStyle.h"
 #include "../UI/ScreenSettingsState.h"
+#include "Core/SettingsManager.h"
 
 
 SettingsState::SettingsState(Game *game)
@@ -20,8 +21,9 @@ SettingsState::SettingsState(Game *game)
 
         // Optionally, scale background to fit window
         auto textureSize = m_backgroundTexture->getSize();
-        float scaleX = static_cast<float>(Config::WINDOW_WIDTH) / textureSize.x;
-        float scaleY = static_cast<float>(Config::WINDOW_HEIGHT) / textureSize.y;
+        auto& settings  = SettingsManager::getInstance();
+        float scaleX = static_cast<float>(settings.getWindowWidth()) / textureSize.x;
+        float scaleY = static_cast<float>(settings.getWindowHeight()) / textureSize.y;
         m_backgroundSprite->setScale(sf::Vector2f(scaleX,scaleY));
     }
     else{

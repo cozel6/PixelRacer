@@ -24,7 +24,7 @@ MenuState::MenuState(Game *game)
 		m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
 
 		auto textureSize = m_backgroundTexture->getSize();
-		// NU mai declara auto& settings aici - deja e declarat mai sus
+		
 		float scaleX = static_cast<float>(settings.getWindowWidth()) / textureSize.x;
 		float scaleY = static_cast<float>(settings.getWindowHeight()) / textureSize.y;
 		m_backgroundSprite->setScale(sf::Vector2f(scaleX, scaleY));
