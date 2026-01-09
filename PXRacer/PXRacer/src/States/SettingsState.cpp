@@ -4,6 +4,7 @@
 #include "../States/StateManager.h"
 #include <iostream>
 #include "../UI/MenuStyle.h"
+#include "../UI/ScreenSettingsState.h"
 
 
 SettingsState::SettingsState(Game *game)
@@ -111,8 +112,9 @@ void SettingsState::handleInput(const sf::Event &event)
             // Execute action for selected option
             switch (m_selectedIndex)
             {
-            case 0:
-                std::cout << "Screen option selected (placeholder)\n";
+            case 0:  // SCREEN
+                std::cout << "Opening Screen Settings..." << std::endl;
+                m_game->getStateManager()->pushState(std::make_unique<ScreenSettingsState>(m_game));
                 break;
             case 1:
                 std::cout << "Sounds option selected (placeholder)\n";

@@ -3,6 +3,7 @@
 #include "Core/Constants.h"
 #include "States/StateManager.h"
 #include "States/MainMenuState.h"
+#include "Core/SettingsManager.h"
 #include <iostream>
 
 // Constructor - Initializes the main menu
@@ -11,6 +12,8 @@ MenuState::MenuState(Game *game)
 	, m_blinkTimer(0.0f)
 	, m_showStartText(true)
 {
+	auto& settings = SettingsManager::getInstance();
+
 	m_titleText = std::make_unique<sf::Text>(m_font, sf::String());
 	m_startText = std::make_unique<sf::Text>(m_font, sf::String());
 	m_versionText = std::make_unique<sf::Text>(m_font, sf::String());
@@ -21,8 +24,9 @@ MenuState::MenuState(Game *game)
 		m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
 
 		auto textureSize = m_backgroundTexture->getSize();
-		float scaleX = static_cast<float>(Config::WINDOW_WIDTH) / textureSize.x;
-		float scaleY = static_cast<float>(Config::WINDOW_HEIGHT) / textureSize.y;
+		// NU mai declara auto& settings aici - deja e declarat mai sus
+		float scaleX = static_cast<float>(settings.getWindowWidth()) / textureSize.x;
+		float scaleY = static_cast<float>(settings.getWindowHeight()) / textureSize.y;
 		m_backgroundSprite->setScale(sf::Vector2f(scaleX, scaleY));
 	}
 	else {
@@ -41,7 +45,7 @@ MenuState::MenuState(Game *game)
 
 	auto titleBounds = m_titleText->getLocalBounds();
 	m_titleText->setOrigin(titleBounds.position + titleBounds.size * 0.5f);
-	m_titleText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT / 3.0f));
+	m_titleText->setPosition(sf::Vector2f(settings.getWindowWidth() * 0.5f, settings.getWindowHeight() / 3.0f));
 
 	m_startText->setString(sf::String("Press ENTER to Start"));
 	m_startText->setCharacterSize(24);
@@ -49,19 +53,20 @@ MenuState::MenuState(Game *game)
 
 	auto startBounds = m_startText->getGlobalBounds();
 	m_startText->setOrigin(sf::Vector2f(startBounds.size.x * 0.5f, startBounds.size.y * 0.5f));
-	m_startText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT * 0.66f));
+	m_startText->setPosition(sf::Vector2f(settings.getWindowWidth() * 0.5f, settings.getWindowHeight() * 0.66f));
 
 	m_versionText->setString(sf::String("Alpha0.1 - Development Build"));
 	m_versionText->setCharacterSize(16);
 	m_versionText->setFillColor(sf::Color(150, 150, 150));
-	m_versionText->setPosition(sf::Vector2f(10.0f, Config::WINDOW_HEIGHT - 30.0f));
+	m_versionText->setPosition(sf::Vector2f(10.0f, settings.getWindowHeight() - 30.0f));
 
 	m_titleAnimation = std::make_unique<TitleAnimation>(
 		m_font,
-		sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT / 3.0f),
-		Config::WINDOW_HEIGHT
+		sf::Vector2f(settings.getWindowWidth() * 0.5f, settings.getWindowHeight() / 3.0f),
+		settings.getWindowHeight()
 	);
 }
+
 
 // Handles user input for Enter and Escape keys
 void MenuState::handleInput(const sf::Event &event)

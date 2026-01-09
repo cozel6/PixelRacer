@@ -22,6 +22,9 @@ public:
     // Game control
     void quit() { m_isRunning = false; }
 
+    // Settings management
+    void applySettings();
+
     //StateManager
     StateManager* getStateManager() { return m_stateManager.get(); }
 
@@ -37,6 +40,8 @@ private:
     void processEvents();
     void update(float deltaTime);
     void render();
+    void initializeWindow();
+    void recreateWindow();
 
     // Core components
     sf::RenderWindow m_window;
