@@ -5,6 +5,7 @@
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/StateManager.h"
+#include "Core/AudioManager.h"
 #include <iostream>
 
 PlayState::PlayState(Game* game, GameMode mode, const TrackDefinition* track)
@@ -323,6 +324,9 @@ void PlayState::render(sf::RenderWindow& window) {
 }
 
 void PlayState::onEnter() {
+    std::cout << "Entered Play State" << std::endl;
+    AudioManager::getInstance().playMusic("gameplay", true);
+
     // Load campaign track data if in Campaign mode
     if (m_currentMode == GameMode::Campaign) {
         m_campaignTrackData = m_game->getCurrentCampaignTrack();

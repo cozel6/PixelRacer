@@ -64,8 +64,8 @@ if(WIN32 AND NOT DEFINED ENV{SFML_DIR})
     endforeach()
 endif()
 
-find_package(SFML 3 COMPONENTS Graphics Window REQUIRED)
-target_link_libraries(PXRacer PRIVATE SFML::Graphics SFML::Window)
+find_package(SFML 3 COMPONENTS Graphics Window Audio REQUIRED)
+target_link_libraries(PXRacer PRIVATE SFML::Graphics SFML::Window SFML::Audio)
 
 # Set C++ standard
 set_target_properties(PXRacer PROPERTIES

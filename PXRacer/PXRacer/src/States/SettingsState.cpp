@@ -5,7 +5,9 @@
 #include <iostream>
 #include "../UI/MenuStyle.h"
 #include "../UI/ScreenSettingsState.h"
+#include "../UI/AudioSettingsState.h"
 #include "Core/SettingsManager.h"
+#include "Core/AudioManager.h"
 
 
 SettingsState::SettingsState(Game *game)
@@ -41,7 +43,7 @@ SettingsState::SettingsState(Game *game)
     m_menuOptions = {
         "SCREEN",
         "SOUNDS",
-        "MUSIC",
+        "AUDIO",
         "CONTROLS",
         "RETURN"};
 
@@ -75,6 +77,7 @@ SettingsState::SettingsState(Game *game)
 void SettingsState::onEnter()
 {
     std::cout << "Entered SettingsState" << std::endl;
+    AudioManager::getInstance().playMusic("main_menu", true);
 }
 // Core state functions
 void SettingsState::handleInput(const sf::Event &event)
@@ -121,8 +124,9 @@ void SettingsState::handleInput(const sf::Event &event)
             case 1:
                 std::cout << "Sounds option selected (placeholder)\n";
                 break;
-            case 2:
-                std::cout << "Music option selected (placeholder)\n";
+            case 2:  // AUDIO
+                std::cout << "Opening Audio Settings..." << std::endl;
+                m_game->getStateManager()->pushState(std::make_unique<AudioSettingsState>(m_game));
                 break;
             case 3:
                 std::cout << "Controls option selected (placeholder)\n";

@@ -3,6 +3,7 @@
 #include "States/StateManager.h"
 #include "States/MenuState.h"
 #include "Core/SettingsManager.h"
+#include "Core/AudioManager.h"
 #include <iostream>
 
 Game::Game()
@@ -10,6 +11,9 @@ Game::Game()
 {
     // Load settings first
     SettingsManager::getInstance().loadFromFile();
+
+    // Initialize AudioManager and load volumes from settings
+    AudioManager::getInstance().updateVolumesFromSettings();
 
     // Create window with loaded settings
     initializeWindow();

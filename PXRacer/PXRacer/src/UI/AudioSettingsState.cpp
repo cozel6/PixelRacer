@@ -1,29 +1,30 @@
-#include "ScreenSettingsState.h"
+#include "AudioSettingsState.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "Core/SettingsManager.h"
+#include "Core/AudioManager.h"
 #include "States/StateManager.h"
 #include "UI/MenuStyle.h"
 #include <iostream>
 
-// Constructor - Initializes the screen settings menu
-ScreenSettingsState::ScreenSettingsState(Game* game)
+// Constructor - Initializes the audio settings menu
+AudioSettingsState::AudioSettingsState(Game* game)
     : State(game)
     , m_selectedIndex(0)
     , m_blinkTimer(0.0f)
     , m_showSelector(true)
 {
     auto& settings = SettingsManager::getInstance();
-    
+
     // Load current settings
-    m_resolutionIndex = settings.getCurrentResolutionIndex();
-    m_fullscreenEnabled = settings.isFullscreen();
+    m_musicVolume = settings.getMusicVolume();
+    m_sfxVolume = settings.getSfxVolume();
 
     // Load background
     m_backgroundTexture = std::make_unique<sf::Texture>();
     if (m_backgroundTexture->loadFromFile(MenuStyle::MENU_BACKGROUND_PATH)) {
         m_backgroundSprite = std::make_unique<sf::Sprite>(*m_backgroundTexture);
-        
+
         auto textureSize = m_backgroundTexture->getSize();
         float scaleX = static_cast<float>(settings.getWindowWidth()) / textureSize.x;
         float scaleY = static_cast<float>(settings.getWindowHeight()) / textureSize.y;
@@ -39,7 +40,7 @@ ScreenSettingsState::ScreenSettingsState(Game* game)
 
     // Create title
     m_titleText = std::make_unique<sf::Text>(m_font, sf::String());
-    m_titleText->setString("SCREEN SETTINGS");
+    m_titleText->setString("AUDIO SETTINGS");
     m_titleText->setCharacterSize(MenuStyle::getTitleSize());
     m_titleText->setFillColor(MenuStyle::TITLE_COLOR);
 
@@ -49,8 +50,8 @@ ScreenSettingsState::ScreenSettingsState(Game* game)
 
     // Create menu options
     m_menuOptions = {
-        "Resolution: ",
-        "Fullscreen: ",
+        "Music Volume: ",
+        "SFX Volume: ",
         "Apply",
         "Back"
     };
@@ -60,10 +61,10 @@ ScreenSettingsState::ScreenSettingsState(Game* game)
         auto text = std::make_unique<sf::Text>(m_font, sf::String());
         text->setCharacterSize(MenuStyle::getMenuItemSize());
         text->setFillColor(MenuStyle::MENU_ITEM_COLOR);
-        
+
         float yPos = MenuStyle::getMenuItemYStart() + (i * MenuStyle::getMenuItemSpacing());
         text->setPosition(sf::Vector2f(MenuStyle::getMenuItemXPosition(), yPos));
-        
+
         m_menuTexts.push_back(std::move(text));
     }
 
@@ -71,7 +72,7 @@ ScreenSettingsState::ScreenSettingsState(Game* game)
 }
 
 // Handles user input
-void ScreenSettingsState::handleInput(const sf::Event& event) {
+void AudioSettingsState::handleInput(const sf::Event& event) {
     if (event.is<sf::Event::KeyPressed>()) {
         const auto* key = event.getIf<sf::Event::KeyPressed>();
 
@@ -91,34 +92,32 @@ void ScreenSettingsState::handleInput(const sf::Event& event) {
                 break;
 
             case sf::Keyboard::Key::Left:
-                if (m_selectedIndex == 0) {  // Resolution
-                    const auto& resolutions = SettingsManager::AVAILABLE_RESOLUTIONS;
-                    m_resolutionIndex = (m_resolutionIndex - 1 + static_cast<int>(resolutions.size())) % resolutions.size();
+                if (m_selectedIndex == MUSIC_VOLUME) {
+                    m_musicVolume = std::max(0.0f, m_musicVolume - VOLUME_INCREMENT);
                     updateMenuDisplay();
                 }
-                else if (m_selectedIndex == 1) {  // Fullscreen
-                    m_fullscreenEnabled = !m_fullscreenEnabled;
+                else if (m_selectedIndex == SFX_VOLUME) {
+                    m_sfxVolume = std::max(0.0f, m_sfxVolume - VOLUME_INCREMENT);
                     updateMenuDisplay();
                 }
                 break;
 
             case sf::Keyboard::Key::Right:
-                if (m_selectedIndex == 0) {  // Resolution
-                    const auto& resolutions = SettingsManager::AVAILABLE_RESOLUTIONS;
-                    m_resolutionIndex = (m_resolutionIndex + 1) % resolutions.size();
+                if (m_selectedIndex == MUSIC_VOLUME) {
+                    m_musicVolume = std::min(100.0f, m_musicVolume + VOLUME_INCREMENT);
                     updateMenuDisplay();
                 }
-                else if (m_selectedIndex == 1) {  // Fullscreen
-                    m_fullscreenEnabled = !m_fullscreenEnabled;
+                else if (m_selectedIndex == SFX_VOLUME) {
+                    m_sfxVolume = std::min(100.0f, m_sfxVolume + VOLUME_INCREMENT);
                     updateMenuDisplay();
                 }
                 break;
 
             case sf::Keyboard::Key::Enter:
-                if (m_selectedIndex == 2) {  // Apply
+                if (m_selectedIndex == APPLY) {
                     applySettings();
                 }
-                else if (m_selectedIndex == 3) {  // Back
+                else if (m_selectedIndex == BACK) {
                     m_game->getStateManager()->popState();
                 }
                 break;
@@ -133,8 +132,8 @@ void ScreenSettingsState::handleInput(const sf::Event& event) {
     }
 }
 
-// Updates the screen settings state
-void ScreenSettingsState::update(float deltaTime) {
+// Updates the audio settings state
+void AudioSettingsState::update(float deltaTime) {
     m_blinkTimer += deltaTime;
 
     if (m_blinkTimer >= MenuStyle::BLINK_INTERVAL) {
@@ -144,8 +143,8 @@ void ScreenSettingsState::update(float deltaTime) {
     }
 }
 
-// Renders the screen settings state
-void ScreenSettingsState::render(sf::RenderWindow& window) {
+// Renders the audio settings state
+void AudioSettingsState::render(sf::RenderWindow& window) {
     if (m_backgroundSprite) {
         window.draw(*m_backgroundSprite);
     }
@@ -158,24 +157,21 @@ void ScreenSettingsState::render(sf::RenderWindow& window) {
 }
 
 // Called when entering the state
-void ScreenSettingsState::onEnter() {
-    std::cout << "Entered Screen Settings State" << std::endl;
-    // Keep menu music playing (no need to restart)
+void AudioSettingsState::onEnter() {
+    std::cout << "Entered Audio Settings State" << std::endl;
 }
 
 // Updates the menu display with current values
-void ScreenSettingsState::updateMenuDisplay() {
-    const auto& resolutions = SettingsManager::AVAILABLE_RESOLUTIONS;
-
+void AudioSettingsState::updateMenuDisplay() {
     for (size_t i = 0; i < m_menuTexts.size(); ++i) {
         std::string displayText = m_menuOptions[i];
 
-        // Add current values for settings
-        if (i == 0) {  // Resolution
-            displayText += resolutions[m_resolutionIndex].name;
+        // Add current values for audio settings
+        if (i == MUSIC_VOLUME) {
+            displayText += "< " + std::to_string(static_cast<int>(m_musicVolume)) + " >";
         }
-        else if (i == 1) {  // Fullscreen
-            displayText += m_fullscreenEnabled ? "ON" : "OFF";
+        else if (i == SFX_VOLUME) {
+            displayText += "< " + std::to_string(static_cast<int>(m_sfxVolume)) + " >";
         }
 
         // Add selector prefix if selected
@@ -193,21 +189,24 @@ void ScreenSettingsState::updateMenuDisplay() {
     }
 }
 
-// Applies the settings and recreates the window
-void ScreenSettingsState::applySettings() {
+// Applies the settings
+void AudioSettingsState::applySettings() {
     auto& settings = SettingsManager::getInstance();
 
-    std::cout << "Applying settings..." << std::endl;
-    std::cout << "Resolution: " << SettingsManager::AVAILABLE_RESOLUTIONS[m_resolutionIndex].name << std::endl;
-    std::cout << "Fullscreen: " << (m_fullscreenEnabled ? "ON" : "OFF") << std::endl;
+    std::cout << "Applying audio settings..." << std::endl;
+    std::cout << "Music Volume: " << static_cast<int>(m_musicVolume) << "%" << std::endl;
+    std::cout << "SFX Volume: " << static_cast<int>(m_sfxVolume) << "%" << std::endl;
 
     // Update settings
-    settings.setResolution(m_resolutionIndex);
-    settings.setFullscreen(m_fullscreenEnabled);
+    settings.setMusicVolume(m_musicVolume);
+    settings.setSfxVolume(m_sfxVolume);
 
-    // Apply settings (saves to file and recreates window)
-    m_game->applySettings();
+    // Save to file
+    settings.saveToFile();
 
-    // Note: After applySettings(), the window is recreated and all states are cleared
-    // We will automatically return to MenuState
+    // Update AudioManager
+    AudioManager::getInstance().updateVolumesFromSettings();
+
+    // Return to settings menu
+    m_game->getStateManager()->popState();
 }

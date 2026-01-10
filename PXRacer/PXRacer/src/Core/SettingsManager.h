@@ -24,10 +24,14 @@ public:
     unsigned int getWindowHeight() const { return m_windowHeight; }
     bool isFullscreen() const { return m_isFullscreen; }
     int getCurrentResolutionIndex() const { return m_currentResolutionIndex; }
+    float getMusicVolume() const { return m_musicVolume; }
+    float getSfxVolume() const { return m_sfxVolume; }
 
     // Setters
     void setResolution(int index);
     void setFullscreen(bool fullscreen);
+    void setMusicVolume(float volume);
+    void setSfxVolume(float volume);
 
     // Persistence (simple text file format)
     void loadFromFile(const std::string& filename = "settings.txt");
@@ -46,4 +50,8 @@ private:
     unsigned int m_windowHeight;
     bool m_isFullscreen;
     int m_currentResolutionIndex;
+
+    // Audio settings
+    float m_musicVolume;
+    float m_sfxVolume;
 };

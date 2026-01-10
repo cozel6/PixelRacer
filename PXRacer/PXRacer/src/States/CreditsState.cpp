@@ -3,6 +3,7 @@
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/StateManager.h"
+#include "Core/AudioManager.h"
 #include <iostream>
 
 CreditsState::CreditsState(Game* game)
@@ -81,4 +82,5 @@ void CreditsState::render(sf::RenderWindow& window) {
 
 void CreditsState::onEnter() {
     std::cout << "Entered Credits State" << std::endl;
+    AudioManager::getInstance().playMusic("credits", true);
 }

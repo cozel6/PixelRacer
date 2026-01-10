@@ -7,6 +7,7 @@
 #include "States/CreditsState.h"
 #include "../UI/MenuStyle.h"
 #include "Core/SettingsManager.h"
+#include "Core/AudioManager.h"
 #include <iostream>
 
 MainMenuState::MainMenuState(Game* game)
@@ -157,6 +158,7 @@ void MainMenuState::render(sf::RenderWindow& window) {
 
 void MainMenuState::onEnter() {
     std::cout << "Entered Main Menu State" << std::endl;
+    AudioManager::getInstance().playMusic("main_menu", true);
     m_selectedIndex = 0;
     updateMenuDisplay();
 }

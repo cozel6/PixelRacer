@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
 
 
 // Define available resolutions (16:9 aspect ratio)
@@ -24,6 +25,8 @@ SettingsManager::SettingsManager()
     , m_windowHeight(720)
     , m_isFullscreen(false)
     , m_currentResolutionIndex(0)
+    , m_musicVolume(75.0f)
+    , m_sfxVolume(50.0f)
 {
     std::cout << "[SettingsManager] Initialized with defaults" << std::endl;
 }
@@ -61,6 +64,8 @@ void SettingsManager::saveToFile(const std::string& filename) {
     file << "height=" << m_windowHeight << "\n";
     file << "fullscreen=" << (m_isFullscreen ? "1" : "0") << "\n";
     file << "resolutionIndex=" << m_currentResolutionIndex << "\n";
+    file << "musicVolume=" << m_musicVolume << "\n";
+    file << "sfxVolume=" << m_sfxVolume << "\n";
 
     file.close();
     std::cout << "[SettingsManager] Settings saved to " << filename << std::endl;
@@ -97,10 +102,28 @@ void SettingsManager::loadFromFile(const std::string& filename) {
         else if (key == "resolutionIndex") {
             m_currentResolutionIndex = std::stoi(value);
         }
+        else if (key == "musicVolume") {
+            m_musicVolume = std::stof(value);
+        }
+        else if (key == "sfxVolume") {
+            m_sfxVolume = std::stof(value);
+        }
     }
 
     file.close();
-    std::cout << "[SettingsManager] Settings loaded: " 
-              << m_windowWidth << "x" << m_windowHeight 
+    std::cout << "[SettingsManager] Settings loaded: "
+              << m_windowWidth << "x" << m_windowHeight
               << " Fullscreen=" << (m_isFullscreen ? "ON" : "OFF") << std::endl;
+}
+
+// Set music volume (0-100)
+void SettingsManager::setMusicVolume(float volume) {
+    m_musicVolume = std::clamp(volume, 0.0f, 100.0f);
+    std::cout << "[SettingsManager] Music volume set to " << m_musicVolume << std::endl;
+}
+
+// Set SFX volume (0-100)
+void SettingsManager::setSfxVolume(float volume) {
+    m_sfxVolume = std::clamp(volume, 0.0f, 100.0f);
+    std::cout << "[SettingsManager] SFX volume set to " << m_sfxVolume << std::endl;
 }
