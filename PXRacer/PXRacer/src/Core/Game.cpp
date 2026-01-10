@@ -110,15 +110,43 @@ void Game::initializeWindow() {
 void Game::recreateWindow() {
     auto& settings = SettingsManager::getInstance();
 
-    // Close existing window
-    m_window.close();
+    // Get new resolution
+    int newWidth = settings.getWindowWidth();
+    int newHeight = settings.getWindowHeight();
+    bool isFullscreen = settings.isFullscreen();
 
-    // Recreate with new settings
-    initializeWindow();
+    // Check if we need to toggle fullscreen
+    // Note: SFML doesn't have isFullscreen(), so we track it via SettingsManager
+    bool wasFullscreen = (m_window.getSize().x == sf::VideoMode::getDesktopMode().size.x &&
+                          m_window.getSize().y == sf::VideoMode::getDesktopMode().size.y);
 
-    // Clear all states and return to main menu
-    m_stateManager->clearStates();
-    m_stateManager->pushState(std::make_unique<MenuState>(this));
+    // Resize window instead of recreating (when possible)
+    if (isFullscreen != wasFullscreen) {
+        // Fullscreen toggle requires window recreation (SFML limitation)
+        m_window.close();
+
+        sf::State windowStyle = isFullscreen ? sf::State::Fullscreen : sf::State::Windowed;
+        m_window.create(
+            sf::VideoMode({static_cast<unsigned int>(newWidth), static_cast<unsigned int>(newHeight)}),
+            Config::WINDOW_TITLE,
+            windowStyle
+        );
+
+        // Apply window settings
+        m_window.setFramerateLimit(Config::FPS_LIMIT);
+        m_window.setVerticalSyncEnabled(Config::VSYNC_ENABLED);
+    } else {
+        // Just resize for windowed mode (preserves game state)
+        m_window.setSize(sf::Vector2u(newWidth, newHeight));
+
+        // Center the window on screen
+        sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+        int posX = (desktop.size.x - newWidth) / 2;
+        int posY = (desktop.size.y - newHeight) / 2;
+        m_window.setPosition(sf::Vector2i(posX, posY));
+    }
+
+    // DO NOT clear states - let the game continue!
 }
 
 void Game::applySettings() {
