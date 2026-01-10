@@ -1,4 +1,5 @@
 #include "CreditsState.h"
+#include "../Core/SettingsManager.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/StateManager.h"
@@ -14,11 +15,14 @@ CreditsState::CreditsState(Game* game)
 }
 
 void CreditsState::initializeUI() {
+    auto& settings = SettingsManager::getInstance();
+    float centerX = settings.getWindowWidth() / 2.0f;
+
     m_titleText = std::make_unique<sf::Text>(m_font);
     m_titleText->setString("CREDITS");
     m_titleText->setCharacterSize(36);
     m_titleText->setFillColor(sf::Color::White);
-    m_titleText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f - 100.0f, 80.0f));
+    m_titleText->setPosition(sf::Vector2f(centerX - 100.0f, 80.0f));
 
     std::vector<std::string> credits = {
         "CREATED BY",
@@ -43,7 +47,7 @@ void CreditsState::initializeUI() {
             creditText->setFillColor(sf::Color(200, 200, 200));
         }
 
-        creditText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f - 120.0f, 180.0f + i * 40.0f));
+        creditText->setPosition(sf::Vector2f(centerX - 120.0f, 180.0f + i * 40.0f));
         m_creditTexts.push_back(std::move(creditText));
     }
 
@@ -51,7 +55,8 @@ void CreditsState::initializeUI() {
     m_asciiArt->setString("  _____\n /     \\\n|  O O  |\n|   ^   |\n|  \\_/  |\n \\_____/");
     m_asciiArt->setCharacterSize(14);
     m_asciiArt->setFillColor(sf::Color::Green);
-    m_asciiArt->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f - 50.0f, Config::WINDOW_HEIGHT - 150.0f));
+    float windowHeight = static_cast<float>(settings.getWindowHeight());
+    m_asciiArt->setPosition(sf::Vector2f(centerX - 50.0f, windowHeight - 150.0f));
 }
 
 void CreditsState::handleInput(const sf::Event& event) {

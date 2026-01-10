@@ -1,5 +1,6 @@
 ﻿#include "PlayState.h"
 #include "TrackSelectState.h"
+#include "../Core/SettingsManager.h"
 #include "MainMenuState.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
@@ -33,8 +34,10 @@ void PlayState::initPauseMenu() {
         std::cerr << "[PlayState] Failed to load pause font!" << std::endl;
     }
     
-    const float windowWidth = static_cast<float>(Config::WINDOW_WIDTH);
-    const float windowHeight = static_cast<float>(Config::WINDOW_HEIGHT);
+    auto& settings = SettingsManager::getInstance();
+    float windowWidth = static_cast<float>(settings.getWindowWidth());
+    float windowHeight = static_cast<float>(settings.getWindowHeight());
+
     
     m_pauseTitle = std::make_unique<sf::Text>(m_pauseFont);
     m_pauseTitle->setString("PAUSED");
@@ -83,8 +86,11 @@ void PlayState::initPauseMenu() {
 }
 
 void PlayState::initTaskOverlay() {
-    const float windowWidth = static_cast<float>(Config::WINDOW_WIDTH);
-    const float windowHeight = static_cast<float>(Config::WINDOW_HEIGHT);
+    
+    auto& settings = SettingsManager::getInstance();
+    float windowWidth = static_cast<float>(settings.getWindowWidth());
+    float windowHeight = static_cast<float>(settings.getWindowHeight());
+
     
     // Background overlay
     m_taskOverlayBg = std::make_unique<sf::RectangleShape>(sf::Vector2f(500.f, 300.f));

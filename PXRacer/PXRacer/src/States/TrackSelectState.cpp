@@ -1,4 +1,5 @@
 ﻿#include "TrackSelectState.h"
+#include "../Core/SettingsManager.h"
 #include "PlayState.h"
 #include "TaskSelectState.h"
 #include "GameModeSelectState.h"
@@ -80,8 +81,11 @@ std::string TrackSelectState::getDifficultyString(TrackDifficulty diff) {
 }
 
 void TrackSelectState::createUI() {
-    const float windowWidth = static_cast<float>(Config::WINDOW_WIDTH);
-    const float windowHeight = static_cast<float>(Config::WINDOW_HEIGHT);
+
+    auto& settings = SettingsManager::getInstance();
+    float windowWidth = static_cast<float>(settings.getWindowWidth());
+    float windowHeight = static_cast<float>(settings.getWindowHeight());
+
 
     m_headerText = std::make_unique<sf::Text>(m_font);
     m_headerText->setString("SELECT TRACK");
@@ -484,7 +488,8 @@ void TrackSelectState::render(sf::RenderWindow& window) {
     
     for (int i = 0; i < 8; ++i) {
         float xOffset = std::sin(m_animTimer * 0.3f + i * 0.4f) * 30.0f;
-        sf::RectangleShape line(sf::Vector2f(2.0f, static_cast<float>(Config::WINDOW_HEIGHT)));
+        auto& settings = SettingsManager::getInstance();
+        sf::RectangleShape line(sf::Vector2f(2.0f,  static_cast<float>(settings.getWindowHeight()))); 
         line.setPosition(sf::Vector2f(160.0f + i * 140.0f + xOffset, 0.0f));
         line.setFillColor(sf::Color(25, 25, 35, 80));
         window.draw(line);

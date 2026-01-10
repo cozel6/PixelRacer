@@ -1,4 +1,5 @@
 ﻿#include "TaskSelectState.h"
+#include "../Core/SettingsManager.h"
 #include "PlayState.h"
 #include "TrackSelectState.h"
 #include "Core/Game.h"
@@ -30,8 +31,9 @@ TaskSelectState::TaskSelectState(Game* game, CampaignTrackData trackData, const 
 }
 
 void TaskSelectState::createUI() {
-    const float windowWidth = static_cast<float>(Config::WINDOW_WIDTH);
-    const float windowHeight = static_cast<float>(Config::WINDOW_HEIGHT);
+    auto& settings = SettingsManager::getInstance();
+    const float windowWidth = static_cast<float>(settings.getWindowWidth());
+    const float windowHeight = static_cast<float>(settings.getWindowHeight());
     
     // Header
     m_headerText = std::make_unique<sf::Text>(m_font);

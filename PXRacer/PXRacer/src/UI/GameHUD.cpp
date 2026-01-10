@@ -1,4 +1,5 @@
 ﻿#include "GameHUD.h"
+#include "../Core/SettingsManager.h"
 #include "Core/Constants.h"
 #include <sstream>
 #include <iomanip>
@@ -33,8 +34,10 @@ GameHUD::GameHUD() {
         std::cerr << "[HUD] Failed to load font!" << std::endl;
     }
     
-    float winW = static_cast<float>(Config::WINDOW_WIDTH);
-    float winH = static_cast<float>(Config::WINDOW_HEIGHT);
+    auto& settings = SettingsManager::getInstance();
+    float winW = static_cast<float>(settings.getWindowWidth());
+    float winH = static_cast<float>(settings.getWindowHeight());
+
     
     // Left Panel - Speed & Damage
     m_leftPanel = std::make_unique<sf::RectangleShape>(
@@ -337,8 +340,10 @@ void GameHUD::renderCountdown(sf::RenderWindow& window, const GameplayManager& g
     
     if (phase == CountdownPhase::Finished) return;
     
-    float centerX = static_cast<float>(Config::WINDOW_WIDTH) / 2.0f;
-    float centerY = static_cast<float>(Config::WINDOW_HEIGHT) * 0.25f;
+    auto& settings = SettingsManager::getInstance();
+    float centerX = static_cast<float>(settings.getWindowWidth()) / 2.0f;
+    float centerY = static_cast<float>(settings.getWindowHeight()) * 0.25f;
+
     
     sf::RectangleShape panel(sf::Vector2f(400.0f, 120.0f));
     panel.setOrigin(sf::Vector2f(200.0f, 60.0f));
@@ -399,8 +404,10 @@ void GameHUD::renderBoostFeedback(sf::RenderWindow& window, const GameplayManage
     const auto& boost = gameplay.getBoostResult();
     if (!boost.attempted) return;
     
-    float centerX = static_cast<float>(Config::WINDOW_WIDTH) / 2.0f;
-    float centerY = static_cast<float>(Config::WINDOW_HEIGHT) * 0.4f;
+    auto& settings = SettingsManager::getInstance();
+    float centerX = static_cast<float>(settings.getWindowWidth()) / 2.0f;
+    float centerY = static_cast<float>(settings.getWindowHeight()) * 0.4f;
+
     
     sf::Text feedbackText(m_font);
     feedbackText.setCharacterSize(36);

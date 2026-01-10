@@ -1,4 +1,5 @@
 ﻿#include "GameModeSelectState.h"
+#include "../Core/SettingsManager.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
 #include "States/PlayState.h"
@@ -32,8 +33,13 @@ void GameModeSelectState::initializeCards() {
         headerBounds.position.x + headerBounds.size.x * 0.5f,
         headerBounds.position.y + headerBounds.size.y * 0.5f
     ));
-    m_headerText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, 60.0f));
     
+    auto& settings = SettingsManager::getInstance();
+    float windowWidth = static_cast<float>(settings.getWindowWidth());
+    float windowHeight = static_cast<float>(settings.getWindowHeight());
+
+    m_headerText->setPosition(sf::Vector2f(windowWidth * 0.5f, 60.0f));
+
     // Hint text
     m_hintText = std::make_unique<sf::Text>(m_font);
     m_hintText->setString("Use ARROWS or MOUSE to select - ENTER to confirm - ESC to go back");
@@ -44,15 +50,15 @@ void GameModeSelectState::initializeCards() {
         hintBounds.position.x + hintBounds.size.x * 0.5f,
         hintBounds.position.y + hintBounds.size.y * 0.5f
     ));
-    m_hintText->setPosition(sf::Vector2f(Config::WINDOW_WIDTH * 0.5f, Config::WINDOW_HEIGHT - 40.0f));
+    m_hintText->setPosition(sf::Vector2f(windowWidth * 0.5f, windowHeight - 40.0f));
 
     // Card dimensions
     const float cardWidth = 350.0f;
     const float cardHeight = 400.0f;
     const float cardSpacing = 40.0f;
     const float totalWidth = 3 * cardWidth + 2 * cardSpacing;
-    const float startX = (Config::WINDOW_WIDTH - totalWidth) * 0.5f;
-    const float cardY = (Config::WINDOW_HEIGHT - cardHeight) * 0.5f + 20.0f;
+    const float startX = (windowWidth - totalWidth) * 0.5f;
+    const float cardY = (windowHeight - cardHeight) * 0.5f + 20.0f;
 
     // Card 1: Endless Mode
     GameModeCard endless;
@@ -384,18 +390,19 @@ void GameModeSelectState::update(float deltaTime) {
 
 void GameModeSelectState::drawBackground(sf::RenderWindow& window) {
     // Gradient background
+    auto& settings = SettingsManager::getInstance();
     sf::RectangleShape bg(sf::Vector2f(
-        static_cast<float>(Config::WINDOW_WIDTH),
-        static_cast<float>(Config::WINDOW_HEIGHT)
+        static_cast<float>(settings.getWindowWidth()),
+        static_cast<float>(settings.getWindowHeight())
     ));
     bg.setFillColor(sf::Color(15, 15, 25));
     window.draw(bg);
-    
+
     // Animated decorative lines
     for (int i = 0; i < 5; ++i) {
         float yOffset = std::sin(m_bgAnimTimer * 0.5f + i * 0.5f) * 20.0f;
-        
-        sf::RectangleShape line(sf::Vector2f(static_cast<float>(Config::WINDOW_WIDTH), 2.0f));
+
+        sf::RectangleShape line(sf::Vector2f(static_cast<float>(settings.getWindowWidth()), 2.0f));
         line.setPosition(sf::Vector2f(0.0f, 100.0f + i * 150.0f + yOffset));
         line.setFillColor(sf::Color(40, 40, 60, 100));
         window.draw(line);
