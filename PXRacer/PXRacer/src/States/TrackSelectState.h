@@ -13,6 +13,8 @@ public:
     void handleInput(const sf::Event& event) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow& window) override;
+    void onEnter() override;
+    void onExit() override;
 
 private:
     // Track card structure

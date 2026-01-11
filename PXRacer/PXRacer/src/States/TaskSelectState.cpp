@@ -3,6 +3,7 @@
 #include "PlayState.h"
 #include "TrackSelectState.h"
 #include "Core/Game.h"
+#include "Core/AudioManager.h"
 #include "States/StateManager.h"
 #include "Core/Constants.h"
 #include <iostream>
@@ -211,59 +212,67 @@ void TaskSelectState::handleInput(const sf::Event& event) {
         switch (keyPressed->code) {
             case sf::Keyboard::Key::Left:
                 m_selectedTaskIndex = (m_selectedTaskIndex - 1 + 3) % 3;
+                AudioManager::getInstance().playSfx("menu_select");
                 updateTaskDisplay();
                 break;
-                
+
             case sf::Keyboard::Key::Right:
                 m_selectedTaskIndex = (m_selectedTaskIndex + 1) % 3;
+                AudioManager::getInstance().playSfx("menu_select");
                 updateTaskDisplay();
                 break;
-                
+
             case sf::Keyboard::Key::Enter:
+                AudioManager::getInstance().playSfx("menu_select");
                 confirmSelection();
                 break;
-                
+
             case sf::Keyboard::Key::Escape:
                 m_game->getStateManager()->changeState(
                     std::make_unique<TrackSelectState>(m_game, GameMode::Campaign));
                 break;
-                
+
             default:
                 break;
         }
     }
-    
+
     // Mouse handling
     if (const auto* mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
-        sf::Vector2f mousePos(static_cast<float>(mouseMoved->position.x), 
+        sf::Vector2f mousePos(static_cast<float>(mouseMoved->position.x),
                               static_cast<float>(mouseMoved->position.y));
-        
+
         m_backHovered = m_backButton->getGlobalBounds().contains(mousePos);
         m_startHovered = m_startButton->getGlobalBounds().contains(mousePos);
-        
+
         // Check task cards
         for (int i = 0; i < 3; ++i) {
             if (m_taskCards[i].background->getGlobalBounds().contains(mousePos)) {
-                m_selectedTaskIndex = i;
-                updateTaskDisplay();
+                if (m_selectedTaskIndex != i) {
+                    AudioManager::getInstance().playSfx("menu_select");
+                    m_selectedTaskIndex = i;
+                    updateTaskDisplay();
+                }
             }
         }
     }
-    
+
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left) {
             sf::Vector2f mousePos(static_cast<float>(mousePressed->position.x),
                                   static_cast<float>(mousePressed->position.y));
-            
+
             if (m_backButton->getGlobalBounds().contains(mousePos)) {
                 m_game->getStateManager()->changeState(
                     std::make_unique<TrackSelectState>(m_game, GameMode::Campaign));
             } else if (m_startButton->getGlobalBounds().contains(mousePos)) {
+                AudioManager::getInstance().playSfx("menu_select");
                 confirmSelection();
             } else {
                 for (int i = 0; i < 3; ++i) {
                     if (m_taskCards[i].background->getGlobalBounds().contains(mousePos)) {
                         m_selectedTaskIndex = i;
+                        AudioManager::getInstance().playSfx("menu_select");
                         confirmSelection();
                         break;
                     }

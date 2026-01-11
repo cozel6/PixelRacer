@@ -17,13 +17,23 @@ AudioManager::AudioManager()
     std::cout << "[AudioManager] Initialized" << std::endl;
 
     // Register music tracks for different states
+
+    // Menu items
     m_musicTracks["main_menu"] = "assets/music/menu_theme.ogg";
-    m_musicTracks["gameplay"] = "assets/music/gameplay_theme.ogg";
+
+    // Credits
     m_musicTracks["credits"] = "assets/music/credits_theme.ogg";
 
     std::cout << "[AudioManager] Registered " << m_musicTracks.size() << " music tracks" << std::endl;
 
+    // Menu
+
     m_sfxRegistry["menu_select"] = "assets/music/select_item_menu_theme.ogg";
+    m_sfxRegistry["gamemode_select"] = "assets/music/select_confirmation_effect.ogg";
+
+    // Race
+    m_musicTracks["race_theme_1"] = "assets/music/race_song_theme_1.ogg";
+    m_musicTracks["race_theme_2"] = "assets/music/race_song_theme_2.ogg";
 }
 
 // Play music track

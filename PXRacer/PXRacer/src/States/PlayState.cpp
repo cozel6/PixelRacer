@@ -79,6 +79,7 @@ void PlayState::initPauseMenu() {
     
     m_pauseSelectedIndex = 0;
     updatePauseMenuDisplay();
+    AudioManager::getInstance().playMusic("main_menu", true);
     
     // Initialize task overlay for Campaign mode
     if (m_currentMode == GameMode::Campaign) {
@@ -172,6 +173,7 @@ void PlayState::updatePauseMenuDisplay() {
             bounds.position.x + bounds.size.x * 0.5f,
             bounds.position.y + bounds.size.y * 0.5f
         ));
+        //AudioManager::getInstance().playMusic("main_menu", true);
     }
 }
 
@@ -214,7 +216,8 @@ void PlayState::handleInput(const sf::Event& event) {
         // Normal gameplay - Pause menu handling
         if (keyPressed->code == sf::Keyboard::Key::Escape) {
             if (m_showingTasks) {
-                m_showingTasks = false;  // Close task overlay
+                m_showingTasks = false; 
+                AudioManager::getInstance().playMusic("main_menu", true); 
             } else {
                 m_isPaused = !m_isPaused;
             }
@@ -325,7 +328,7 @@ void PlayState::render(sf::RenderWindow& window) {
 
 void PlayState::onEnter() {
     std::cout << "Entered Play State" << std::endl;
-    AudioManager::getInstance().playMusic("gameplay", true);
+    AudioManager::getInstance().playMusic("race_theme_2", true);
 
     // Load campaign track data if in Campaign mode
     if (m_currentMode == GameMode::Campaign) {
@@ -335,6 +338,11 @@ void PlayState::onEnter() {
             m_campaignProgress.totalLaps = m_savedTrack->recommendedLaps;
         }
     }
+}
+void PlayState::onExit(){
+    std::cout << "Exit Play State" << std::endl;
+    AudioManager::getInstance().playMusic("main_menu", true);
+    
 }
 
 void PlayState::restartGame() {
@@ -355,7 +363,6 @@ void PlayState::restartGame() {
     m_showingTasks = false;
     m_pauseSelectedIndex = 0;
     updatePauseMenuDisplay();
-    
     std::cout << "[GAME] Level restarted!" << std::endl;
 }
 

@@ -5,6 +5,7 @@
 #include "States/PlayState.h"
 #include "States/TrackSelectState.h"
 #include "States/StateManager.h"
+#include "Core/AudioManager.h"
 #include <iostream>
 #include <cmath>
 
@@ -260,27 +261,34 @@ void GameModeSelectState::initializeCards() {
 void GameModeSelectState::handleInput(const sf::Event& event) {
     if (event.is<sf::Event::KeyPressed>()) {
         const auto* key = event.getIf<sf::Event::KeyPressed>();
-        
+
         switch (key->code) {
             case sf::Keyboard::Key::Left:
-            case sf::Keyboard::Key::A:
-                updateSelection((m_selectedIndex - 1 + 3) % 3);
+            case sf::Keyboard::Key::A: {
+                int newIndex = (m_selectedIndex - 1 + 3) % 3;
+                AudioManager::getInstance().playSfx("menu_select");
+                updateSelection(newIndex);
                 break;
-                
+            }
+
             case sf::Keyboard::Key::Right:
-            case sf::Keyboard::Key::D:
-                updateSelection((m_selectedIndex + 1) % 3);
+            case sf::Keyboard::Key::D: {
+                int newIndex = (m_selectedIndex + 1) % 3;
+                AudioManager::getInstance().playSfx("menu_select");
+                updateSelection(newIndex);
                 break;
-                
+            }
+
             case sf::Keyboard::Key::Enter:
             case sf::Keyboard::Key::Space:
+                AudioManager::getInstance().playSfx("menu_select");
                 selectCurrentMode();
                 break;
-                
+
             case sf::Keyboard::Key::Escape:
                 m_game->getStateManager()->popState();
                 break;
-                
+
             default:
                 break;
         }
@@ -289,11 +297,12 @@ void GameModeSelectState::handleInput(const sf::Event& event) {
         const auto* mouseEvent = event.getIf<sf::Event::MouseMoved>();
         sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                               static_cast<float>(mouseEvent->position.y));
-        
+
         for (size_t i = 0; i < m_cards.size(); ++i) {
             auto bounds = m_cards[i].cardShape->getGlobalBounds();
             if (bounds.contains(mousePos)) {
                 if (m_selectedIndex != static_cast<int>(i)) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     updateSelection(static_cast<int>(i));
                 }
                 break;
@@ -305,10 +314,11 @@ void GameModeSelectState::handleInput(const sf::Event& event) {
         if (mouseEvent->button == sf::Mouse::Button::Left) {
             sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                                   static_cast<float>(mouseEvent->position.y));
-            
+
             for (size_t i = 0; i < m_cards.size(); ++i) {
                 auto bounds = m_cards[i].cardShape->getGlobalBounds();
                 if (bounds.contains(mousePos)) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     selectCurrentMode();
                     break;
                 }
@@ -316,6 +326,7 @@ void GameModeSelectState::handleInput(const sf::Event& event) {
         }
     }
 }
+
 
 void GameModeSelectState::updateSelection(int newIndex) {
     // Deselect old card

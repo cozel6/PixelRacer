@@ -5,6 +5,7 @@
 #include "GameModeSelectState.h"
 #include "Core/Constants.h"
 #include "Core/Game.h"
+#include "Core/AudioManager.h"
 #include "States/StateManager.h"
 #include <iostream>
 #include <cmath>
@@ -310,31 +311,34 @@ void TrackSelectState::updateDetailPanel() {
 void TrackSelectState::handleInput(const sf::Event& event) {
     if (event.is<sf::Event::KeyPressed>()) {
         const auto* key = event.getIf<sf::Event::KeyPressed>();
-        
+
         switch (key->code) {
             case sf::Keyboard::Key::Up:
             case sf::Keyboard::Key::W:
                 if (m_selectedIndex > 0) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     updateSelection(m_selectedIndex - 1);
                 }
                 break;
-                
+
             case sf::Keyboard::Key::Down:
             case sf::Keyboard::Key::S:
                 if (m_selectedIndex < static_cast<int>(m_trackCards.size()) - 1) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     updateSelection(m_selectedIndex + 1);
                 }
                 break;
-                
+
             case sf::Keyboard::Key::Enter:
             case sf::Keyboard::Key::Space:
+                AudioManager::getInstance().playSfx("gamemode_select");
                 confirmSelection();
                 break;
-                
+
             case sf::Keyboard::Key::Escape:
                 m_game->getStateManager()->popState();
                 break;
-                
+
             default:
                 break;
         }
@@ -343,16 +347,17 @@ void TrackSelectState::handleInput(const sf::Event& event) {
         const auto* mouseEvent = event.getIf<sf::Event::MouseMoved>();
         sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                               static_cast<float>(mouseEvent->position.y));
-        
+
         for (size_t i = 0; i < m_trackCards.size(); ++i) {
             if (m_trackCards[i].cardBg->getGlobalBounds().contains(mousePos)) {
                 if (m_selectedIndex != static_cast<int>(i)) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     updateSelection(static_cast<int>(i));
                 }
                 break;
             }
         }
-        
+
         m_backHovered = m_backButton->getGlobalBounds().contains(mousePos);
         m_startHovered = m_startButton->getGlobalBounds().contains(mousePos);
     }
@@ -361,18 +366,20 @@ void TrackSelectState::handleInput(const sf::Event& event) {
         if (mouseEvent->button == sf::Mouse::Button::Left) {
             sf::Vector2f mousePos(static_cast<float>(mouseEvent->position.x),
                                   static_cast<float>(mouseEvent->position.y));
-            
+
             for (size_t i = 0; i < m_trackCards.size(); ++i) {
                 if (m_trackCards[i].cardBg->getGlobalBounds().contains(mousePos)) {
+                    AudioManager::getInstance().playSfx("menu_select");
                     updateSelection(static_cast<int>(i));
                     break;
                 }
             }
-            
+
             if (m_backButton->getGlobalBounds().contains(mousePos)) {
                 m_game->getStateManager()->popState();
             }
             if (m_startButton->getGlobalBounds().contains(mousePos)) {
+                AudioManager::getInstance().playSfx("gamemode_select");
                 confirmSelection();
             }
         }
@@ -445,6 +452,16 @@ void TrackSelectState::confirmSelection() {
             );
         }
     }
+}
+void TrackSelectState::onEnter(){
+    std::cout << "[TaskSelect] Entered" << std::endl;
+    AudioManager::getInstance().playMusic("main_menu", true);
+
+}
+
+void TrackSelectState::onExit(){
+    std::cout << "[TaskSelect] Entered" << std::endl;
+    AudioManager::getInstance().playMusic("main_menu", true);
 }
 
 void TrackSelectState::update(float deltaTime) {

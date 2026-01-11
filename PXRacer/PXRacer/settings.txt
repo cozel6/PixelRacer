@@ -3,4 +3,4 @@ height=720
 fullscreen=0
 resolutionIndex=0
 musicVolume=5
-sfxVolume=5
+sfxVolume=10
