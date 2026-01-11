@@ -1,6 +1,7 @@
 #include "ScreenSettingsState.h"
 #include "Core/Game.h"
 #include "Core/Constants.h"
+#include "Core/AudioManager.h"
 #include "Core/SettingsManager.h"
 #include "States/StateManager.h"
 #include "UI/MenuStyle.h"
@@ -80,6 +81,7 @@ void ScreenSettingsState::handleInput(const sf::Event& event) {
                 m_selectedIndex = (m_selectedIndex - 1 + static_cast<int>(m_menuOptions.size())) % m_menuOptions.size();
                 m_showSelector = true;
                 m_blinkTimer = 0.0f;
+                AudioManager::getInstance().playSfx("menu_select");
                 updateMenuDisplay();
                 break;
 
@@ -87,6 +89,7 @@ void ScreenSettingsState::handleInput(const sf::Event& event) {
                 m_selectedIndex = (m_selectedIndex + 1) % m_menuOptions.size();
                 m_showSelector = true;
                 m_blinkTimer = 0.0f;
+                AudioManager::getInstance().playSfx("menu_select");
                 updateMenuDisplay();
                 break;
 

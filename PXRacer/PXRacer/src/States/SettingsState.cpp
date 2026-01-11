@@ -99,6 +99,7 @@ void SettingsState::handleInput(const sf::Event &event)
                 m_selectedIndex = m_menuOptions.size() - 1;
             m_blinkTimer = 0.0f;
             m_showSelector = true;
+            AudioManager::getInstance().playSfx("menu_select");
             updateMenuDisplay();
             break;
 
@@ -110,6 +111,7 @@ void SettingsState::handleInput(const sf::Event &event)
                 m_selectedIndex = 0;
             m_blinkTimer = 0.0f;
             m_showSelector = true;
+            AudioManager::getInstance().playSfx("menu_select");
             updateMenuDisplay();
             break;
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <vector>
 
 class AudioManager {
 public:
@@ -48,4 +49,9 @@ private:
 
     // Helper to load music file
     bool loadMusicFile(const std::string& filepath);
+
+    // Sound effects management (using sf::Music due to sf::Sound bug in SFML 3.0.2)
+    std::unordered_map<std::string, std::string> m_sfxRegistry;  // sfxId -> filepath
+    std::vector<std::unique_ptr<sf::Music>> m_activeSfx;  // pool of active sound effects
+
 };

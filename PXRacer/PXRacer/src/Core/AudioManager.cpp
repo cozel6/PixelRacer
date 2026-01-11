@@ -22,6 +22,8 @@ AudioManager::AudioManager()
     m_musicTracks["credits"] = "assets/music/credits_theme.ogg";
 
     std::cout << "[AudioManager] Registered " << m_musicTracks.size() << " music tracks" << std::endl;
+
+    m_sfxRegistry["menu_select"] = "assets/music/select_item_menu_theme.ogg";
 }
 
 // Play music track
@@ -111,10 +113,40 @@ void AudioManager::updateVolumesFromSettings() {
     std::cout << "[AudioManager] Volumes updated from SettingsManager" << std::endl;
 }
 
-// Play sound effect (placeholder for future use)
 void AudioManager::playSfx(const std::string& sfxId) {
-    // TODO: Implement sound effects using sf::Sound and sf::SoundBuffer
-    std::cout << "[AudioManager] SFX requested: " << sfxId << " (not yet implemented)" << std::endl;
+    // Check if SFX exists in registry
+    auto registryIt = m_sfxRegistry.find(sfxId);
+    if (registryIt == m_sfxRegistry.end()) {
+        std::cerr << "[AudioManager] SFX not found in registry: " << sfxId << std::endl;
+        return;
+    }
+
+    std::string filepath = registryIt->second;
+
+    // Clean up finished sound effects FIRST
+    m_activeSfx.erase(
+        std::remove_if(m_activeSfx.begin(), m_activeSfx.end(),
+            [](const std::unique_ptr<sf::Music>& sfx) {
+                return sfx->getStatus() == sf::SoundSource::Status::Stopped;
+            }),
+        m_activeSfx.end()
+    );
+
+    // Create new sound effect using sf::Music
+    auto sfx = std::make_unique<sf::Music>();
+    if (!sfx->openFromFile(filepath)) {
+        std::cerr << "[AudioManager] Failed to load SFX file: " << filepath << std::endl;
+        return;
+    }
+
+    sfx->setVolume(m_sfxVolume);
+    sfx->setLooping(false);  // Important: don't loop SFX!
+    sfx->play();
+
+    // Add to active pool
+    m_activeSfx.push_back(std::move(sfx));
+
+    std::cout << "[AudioManager] Playing SFX: " << sfxId << " (volume: " << m_sfxVolume << "%)" << std::endl;
 }
 
 // Helper to load music file

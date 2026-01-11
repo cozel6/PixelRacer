@@ -90,11 +90,13 @@ void MainMenuState::handleInput(const sf::Event& event) {
         switch (key->code) {
         case sf::Keyboard::Key::Up:
             m_selectedIndex = (m_selectedIndex - 1 + m_menuItems.size()) % m_menuItems.size();
+            AudioManager::getInstance().playSfx("menu_select");
             updateMenuDisplay();
             break;
 
         case sf::Keyboard::Key::Down:
             m_selectedIndex = (m_selectedIndex + 1) % m_menuItems.size();
+            AudioManager::getInstance().playSfx("menu_select");
             updateMenuDisplay();
             break;
 
