@@ -4,6 +4,7 @@
 #include "GameModeConfig.h"
 #include "TrackDefinition.h"
 #include "TrafficSystem.h"
+#include "../Core/AudioManager.h"
 
 enum class CountdownPhase {
     Ready,

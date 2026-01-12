@@ -121,30 +121,35 @@ void GameplayManager::updateCountdown(float deltaTime) {
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light1;
                 m_countdownTimer = m_lightInterval;
+                AudioManager::getInstance().playSfx("countdown_beep");
             }
             break;
         case CountdownPhase::Light1:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light2;
                 m_countdownTimer = m_lightInterval;
+                AudioManager::getInstance().playSfx("countdown_beep");
             }
             break;
         case CountdownPhase::Light2:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light3;
                 m_countdownTimer = m_lightInterval;
+                AudioManager::getInstance().playSfx("countdown_beep");
             }
             break;
         case CountdownPhase::Light3:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light4;
                 m_countdownTimer = m_lightInterval;
+                AudioManager::getInstance().playSfx("countdown_beep");
             }
             break;
         case CountdownPhase::Light4:
             if (m_countdownTimer <= 0.0f) {
                 m_countdownPhase = CountdownPhase::Light5;
                 m_countdownTimer = m_lightInterval;
+                AudioManager::getInstance().playSfx("countdown_beep");
             }
             break;
         case CountdownPhase::Light5:
@@ -153,9 +158,17 @@ void GameplayManager::updateCountdown(float deltaTime) {
                 m_countdownTimer = GO_DISPLAY_TIME;
                 m_boostWindowTimer = GOOD_WINDOW;
                 m_raceStarted = true;
+                
+                
             }
             break;
         case CountdownPhase::Go:
+            static bool goSoundPlayed = false;
+            if (!goSoundPlayed) {
+                AudioManager::getInstance().playSfx("countdown_go");
+                goSoundPlayed = true;
+            }
+
             m_boostWindowTimer -= deltaTime;
             if (m_boostWindowTimer <= 0.0f) {
                 m_boostWindowPassed = true;
@@ -164,8 +177,6 @@ void GameplayManager::updateCountdown(float deltaTime) {
                 m_countdownPhase = CountdownPhase::Finished;
                 m_boostWindowPassed = true;
             }
-            break;
-        case CountdownPhase::Finished:
             break;
     }
 }

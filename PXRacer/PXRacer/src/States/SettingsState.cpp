@@ -42,7 +42,6 @@ SettingsState::SettingsState(Game *game)
     // Define menu options
     m_menuOptions = {
         "SCREEN",
-        "SOUNDS",
         "AUDIO",
         "CONTROLS",
         "RETURN"};
@@ -123,17 +122,14 @@ void SettingsState::handleInput(const sf::Event &event)
                 std::cout << "Opening Screen Settings..." << std::endl;
                 m_game->getStateManager()->pushState(std::make_unique<ScreenSettingsState>(m_game));
                 break;
-            case 1:
-                std::cout << "Sounds option selected (placeholder)\n";
-                break;
-            case 2:  // AUDIO
+            case 1:  // AUDIO
                 std::cout << "Opening Audio Settings..." << std::endl;
                 m_game->getStateManager()->pushState(std::make_unique<AudioSettingsState>(m_game));
                 break;
-            case 3:
+            case 2:
                 std::cout << "Controls option selected (placeholder)\n";
                 break;
-            case 4:
+            case 3:
                 m_game->getStateManager()->popState(); // Back to MainMenu
                 break;
             }
