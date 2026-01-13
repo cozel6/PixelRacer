@@ -16,8 +16,11 @@ public:
 
 private:
     enum MenuItem {
-        MUSIC_VOLUME = 0,
+        MASTER_VOLUME = 0,
+        MUSIC_VOLUME,
+        MUSIC_MUTE,
         SFX_VOLUME,
+        SFX_MUTE,
         APPLY,
         BACK,
         ITEM_COUNT
@@ -40,6 +43,9 @@ private:
     int m_selectedIndex;
     float m_musicVolume;  // Local copy (0-100)
     float m_sfxVolume;    // Local copy (0-100)
+    float m_masterVolume;
+    bool m_musicMuted;
+    bool m_sfxMuted;
     float m_blinkTimer;
     bool m_showSelector;
 

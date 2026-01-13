@@ -25,8 +25,11 @@ SettingsManager::SettingsManager()
     , m_windowHeight(720)
     , m_isFullscreen(false)
     , m_currentResolutionIndex(0)
+    , m_masterVolume(40.0f)
     , m_musicVolume(75.0f)
     , m_sfxVolume(50.0f)
+    , m_musicMuted(false)
+    , m_sfxMuted(false)
 {
     std::cout << "[SettingsManager] Initialized with defaults" << std::endl;
 }
@@ -64,8 +67,11 @@ void SettingsManager::saveToFile(const std::string& filename) {
     file << "height=" << m_windowHeight << "\n";
     file << "fullscreen=" << (m_isFullscreen ? "1" : "0") << "\n";
     file << "resolutionIndex=" << m_currentResolutionIndex << "\n";
+    file << "masterVolume=" << m_masterVolume << "\n";
     file << "musicVolume=" << m_musicVolume << "\n";
     file << "sfxVolume=" << m_sfxVolume << "\n";
+    file << "musicMuted=" << (m_musicMuted ? "1" : "0") << "\n";
+    file << "sfxMuted=" << (m_sfxMuted ? "1" : "0") << "\n";
 
     file.close();
     std::cout << "[SettingsManager] Settings saved to " << filename << std::endl;
@@ -105,8 +111,20 @@ void SettingsManager::loadFromFile(const std::string& filename) {
         else if (key == "musicVolume") {
             m_musicVolume = std::stof(value);
         }
+        if (key == "musicVolume") {
+            m_musicVolume = std::stof(value);
+        }
         else if (key == "sfxVolume") {
             m_sfxVolume = std::stof(value);
+        }
+        else if (key == "masterVolume") {
+            m_masterVolume = std::stof(value);
+        }
+        else if (key == "musicMuted") {
+            m_musicMuted = (value == "1");
+        }
+        else if (key == "sfxMuted") {
+            m_sfxMuted = (value == "1");
         }
     }
 
@@ -126,4 +144,21 @@ void SettingsManager::setMusicVolume(float volume) {
 void SettingsManager::setSfxVolume(float volume) {
     m_sfxVolume = std::clamp(volume, 0.0f, 100.0f);
     std::cout << "[SettingsManager] SFX volume set to " << m_sfxVolume << std::endl;
+}
+// Set Master volume (0-100)
+void SettingsManager::setMasterVolume(float volume) {
+    m_masterVolume = std::clamp(volume, 0.0f, 100.0f);
+    std::cout << "[SettingsManager] Master volume set to " << m_masterVolume << "%" << std::endl;
+}
+
+// Set Music Muted
+void SettingsManager::setMusicMuted(bool muted) {
+    m_musicMuted = muted;
+    std::cout << "[SettingsManager] Music muted: " << (muted ? "ON" : "OFF") << std::endl;
+}
+
+// Set SFX Muted
+void SettingsManager::setSfxMuted(bool muted) {
+    m_sfxMuted = muted;
+    std::cout << "[SettingsManager] SFX muted: " << (muted ? "ON" : "OFF") << std::endl;
 }

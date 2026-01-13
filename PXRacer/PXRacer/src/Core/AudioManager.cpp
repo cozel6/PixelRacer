@@ -11,8 +11,11 @@ AudioManager& AudioManager::getInstance() {
 
 // Constructor - initialize with default values
 AudioManager::AudioManager()
-    : m_musicVolume(75.0f)
+    : m_masterVolume(40.0f)
+    , m_musicVolume(75.0f)
     , m_sfxVolume(50.0f)
+    , m_musicMuted(false)
+    , m_sfxMuted(false)
 {
     std::cout << "[AudioManager] Initialized" << std::endl;
 
@@ -66,7 +69,7 @@ void AudioManager::playMusic(const std::string& trackId, bool loop) {
     m_currentTrackId = trackId;
 
     // Set volume, looping, and play
-    m_currentMusic->setVolume(m_musicVolume);
+    m_currentMusic->setVolume(calculateEffectiveMusicVolume());
     m_currentMusic->setLooping(loop);
     m_currentMusic->play();
 
@@ -104,7 +107,7 @@ void AudioManager::setMusicVolume(float volume) {
 
     // Apply to currently playing music
     if (m_currentMusic) {
-        m_currentMusic->setVolume(m_musicVolume);
+        m_currentMusic->setVolume(calculateEffectiveMusicVolume());
     }
 
     std::cout << "[AudioManager] Music volume set to " << m_musicVolume << "%" << std::endl;
@@ -116,12 +119,42 @@ void AudioManager::setSfxVolume(float volume) {
     std::cout << "[AudioManager] SFX volume set to " << m_sfxVolume << "%" << std::endl;
 }
 
+void AudioManager::setMasterVolume(float volume) {
+    m_masterVolume = std::clamp(volume, 0.0f, 100.0f);
+
+    // Re-apply volume to currently playing music
+    if (m_currentMusic) {
+        m_currentMusic->setVolume(calculateEffectiveMusicVolume());
+    }
+
+    std::cout << "[AudioManager] Master volume set to " << m_masterVolume << "%" << std::endl;
+}
+
+void AudioManager::setMusicMuted(bool muted) {
+    m_musicMuted = muted;
+
+    // Apply immediately to currently playing music
+    if (m_currentMusic) {
+        m_currentMusic->setVolume(calculateEffectiveMusicVolume());
+    }
+
+    std::cout << "[AudioManager] Music muted: " << (muted ? "ON" : "OFF") << std::endl;
+}
+
+void AudioManager::setSfxMuted(bool muted) {
+    m_sfxMuted = muted;
+    std::cout << "[AudioManager] SFX muted: " << (muted ? "ON" : "OFF") << std::endl;
+}
+
 // Update volumes from SettingsManager
 void AudioManager::updateVolumesFromSettings() {
     auto& settings = SettingsManager::getInstance();
 
+    setMasterVolume(settings.getMasterVolume());
     setMusicVolume(settings.getMusicVolume());
     setSfxVolume(settings.getSfxVolume());
+    setMusicMuted(settings.isMusicMuted());
+    setSfxMuted(settings.isSfxMuted());
 
     std::cout << "[AudioManager] Volumes updated from SettingsManager" << std::endl;
 }
@@ -144,7 +177,7 @@ void AudioManager::playSfx(const std::string& sfxId) {
     }
 
     // Set volume and start playback
-    sfx->setVolume(m_sfxVolume);
+    sfx->setVolume(calculateEffectiveSfxVolume());
     sfx->play();
 
     // Add to active SFX pool
@@ -170,4 +203,14 @@ bool AudioManager::loadMusicFile(const std::string& filepath) {
 
     std::cout << "[AudioManager] Loaded music file: " << filepath << std::endl;
     return true;
+}
+
+float AudioManager::calculateEffectiveMusicVolume() const {
+    if (m_musicMuted) return 0.0f;
+    return (m_masterVolume * m_musicVolume) / 100.0f;
+}
+
+float AudioManager::calculateEffectiveSfxVolume() const {
+    if (m_sfxMuted) return 0.0f;
+    return (m_masterVolume * m_sfxVolume) / 100.0f;
 }
