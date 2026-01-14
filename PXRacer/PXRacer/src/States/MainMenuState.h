@@ -23,6 +23,12 @@ private:
 		std::vector<std::unique_ptr<sf::Text>> m_menuItems;
 		sf::Font m_font;
 
+		std::unique_ptr<sf::Sprite> m_backgroundSprite;
+		std::unique_ptr<sf::Texture> m_backgroundTexture;
+
+		std::vector<std::string> m_menuOptions;
+		
+
 		int m_selectedIndex;
 		float m_blinkTimer;
 		bool m_showSelector;

@@ -1,0 +1,9 @@
+width=1280
+height=720
+fullscreen=0
+resolutionIndex=0
+masterVolume=40
+musicVolume=5
+sfxVolume=15
+musicMuted=0
+sfxMuted=0
