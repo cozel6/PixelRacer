@@ -18,8 +18,9 @@ Game::Game()
     // Create window with loaded settings
     initializeWindow();
 
-    // Push initial state
+    // Push initial state using the deferred queue system for consistency
     m_stateManager->pushState(std::make_unique<MenuState>(this));
+    m_stateManager->processStateChanges(); // Process immediately since we're not in a frame yet
 
     auto &settings = SettingsManager::getInstance();
     std::cout << " PixelRacer initialized" << std::endl;
@@ -34,26 +35,30 @@ Game::~Game()
 
 void Game::run() {
     std::cout << "Starting game loop..." << std::endl;
-    
+
     while (m_isRunning && m_window.isOpen()) {
         // Process events
         processEvents();
-        
+
         // Fixed timestep update
         float deltaTime = m_clock.restart().asSeconds();
         m_accumulator += deltaTime;
-        
+
         const float fixedDeltaTime = 1.0f / Config::FPS_LIMIT;
-        
+
         while (m_accumulator >= fixedDeltaTime) {
             update(fixedDeltaTime);
             m_accumulator -= fixedDeltaTime;
         }
-        
+
         // Render
         render();
+
+        // Process pending state changes AFTER frame completes
+        // This ensures states are never deleted while their methods are executing
+        m_stateManager->processStateChanges();
     }
-    
+
     std::cout << "Game loop ended." << std::endl;
 }
 
