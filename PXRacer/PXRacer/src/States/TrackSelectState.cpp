@@ -388,15 +388,16 @@ void TrackSelectState::handleInput(const sf::Event& event) {
 
 void TrackSelectState::confirmSelection() {
     if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_availableTracks.size())) {
-        const auto& selectedTrack = m_availableTracks[m_selectedIndex];
+        // Make a COPY to avoid dangling pointer when state is destroyed
+        TrackDefinition selectedTrack = m_availableTracks[m_selectedIndex];
         std::cout << "[TrackSelect] Selected track: " << selectedTrack.name << std::endl;
-        
+
         if (m_gameMode == GameMode::Campaign) {
             auto campaignTracks = CampaignDataManager::getTracks();
-            
+
             CampaignTrackData campaignTrack;
             bool found = false;
-            
+
             for (const auto& ct : campaignTracks) {
                 if (ct.trackId == selectedTrack.id || ct.name == selectedTrack.name) {
                     campaignTrack = ct;
@@ -404,20 +405,20 @@ void TrackSelectState::confirmSelection() {
                     break;
                 }
             }
-            
+
             if (!found) {
                 campaignTrack.id = m_selectedIndex + 1;
                 campaignTrack.trackId = selectedTrack.id;
                 campaignTrack.name = selectedTrack.name;
                 campaignTrack.description = selectedTrack.description;
                 campaignTrack.unlocked = true;
-                
+
                 if (selectedTrack.name == "Test Oval" || selectedTrack.id == "test_oval") {
                     campaignTrack.requiredLaps = 5;
                 } else {
                     campaignTrack.requiredLaps = selectedTrack.recommendedLaps;
                 }
-                
+
                 switch (selectedTrack.difficulty) {
                     case TrackDifficulty::Easy:
                         campaignTrack.difficulty = CampaignTrackDifficulty::Easy;
@@ -430,7 +431,7 @@ void TrackSelectState::confirmSelection() {
                         campaignTrack.difficulty = CampaignTrackDifficulty::Hard;
                         break;
                 }
-                
+
                 campaignTrack.tasks[0] = CampaignTask(1, CampaignTaskType::FinishRace, 0.0f, "Complete the race");
                 campaignTrack.tasks[1] = CampaignTask(2, CampaignTaskType::BeatTime, 180.0f, "Finish under 3:00");
                 campaignTrack.tasks[2] = CampaignTask(3, CampaignTaskType::NoSpinouts, 0.0f, "No spinouts");
@@ -439,8 +440,8 @@ void TrackSelectState::confirmSelection() {
                     campaignTrack.requiredLaps = 5;
                 }
             }
-            
-            std::cout << "[TrackSelect] Going to TaskSelectState for Campaign (Laps: " 
+
+            std::cout << "[TrackSelect] Going to TaskSelectState for Campaign (Laps: "
                       << campaignTrack.requiredLaps << ")" << std::endl;
             m_game->getStateManager()->changeState(
                 std::make_unique<TaskSelectState>(m_game, campaignTrack, &selectedTrack)
