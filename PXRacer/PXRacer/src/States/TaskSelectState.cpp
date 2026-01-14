@@ -228,8 +228,7 @@ void TaskSelectState::handleInput(const sf::Event& event) {
                 break;
 
             case sf::Keyboard::Key::Escape:
-                m_game->getStateManager()->changeState(
-                    std::make_unique<TrackSelectState>(m_game, GameMode::Campaign));
+                m_game->getStateManager()->popState();
                 break;
 
             default:
@@ -263,8 +262,7 @@ void TaskSelectState::handleInput(const sf::Event& event) {
                                   static_cast<float>(mousePressed->position.y));
 
             if (m_backButton->getGlobalBounds().contains(mousePos)) {
-                m_game->getStateManager()->changeState(
-                    std::make_unique<TrackSelectState>(m_game, GameMode::Campaign));
+                m_game->getStateManager()->popState();
             } else if (m_startButton->getGlobalBounds().contains(mousePos)) {
                 AudioManager::getInstance().playSfx("menu_select");
                 confirmSelection();
