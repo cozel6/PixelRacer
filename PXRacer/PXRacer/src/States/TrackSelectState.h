@@ -19,7 +19,7 @@ public:
 private:
     // Track card structure
     struct TrackCard {
-        const TrackDefinition* track;
+        size_t trackIndex;  // Index into m_availableTracks instead of dangling pointer
         std::unique_ptr<sf::RectangleShape> cardBg;
         std::unique_ptr<sf::RectangleShape> previewBg;
         std::unique_ptr<sf::Text> nameText;

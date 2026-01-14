@@ -213,7 +213,7 @@ void TrackSelectState::createTrackCards() {
     
     for (size_t i = 0; i < m_availableTracks.size(); ++i) {
         TrackCard card;
-        card.track = &m_availableTracks[i];
+        card.trackIndex = i;
         card.isSelected = false;
         card.hoverGlow = 0.0f;
         card.difficultyColor = getDifficultyColor(m_availableTracks[i].difficulty);
